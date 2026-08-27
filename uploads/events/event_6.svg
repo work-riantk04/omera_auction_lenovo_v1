@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="420" viewBox="0 0 1200 420">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1b4b;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#581c87;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0f172a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="420" fill="url(#bg)"/>
+  <text x="600" y="195" font-family="Arial" font-size="42" font-weight="bold" fill="#a78bfa" text-anchor="middle">Furniture Minimalis Modern</text>
+  <text x="600" y="245" font-family="Arial" font-size="20" fill="#64748b" text-anchor="middle">Omera Auction</text>
+  <circle cx="90" cy="70" r="3" fill="#a78bfa" opacity="0.4"/>
+  <circle cx="220" cy="120" r="2" fill="#60a5fa" opacity="0.3"/>
+  <circle cx="980" cy="80" r="4" fill="#fbbf24" opacity="0.2"/>
+  <circle cx="1100" cy="180" r="2" fill="#4ade80" opacity="0.3"/>
+  <circle cx="800" cy="380" r="3" fill="#a78bfa" opacity="0.3"/>
+  <circle cx="150" cy="350" r="2" fill="#f472b6" opacity="0.3"/>
+  <circle cx="500" cy="350" r="3" fill="#22d3ee" opacity="0.2"/>
+</svg>

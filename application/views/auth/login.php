@@ -1,24 +1,18 @@
-<?= $this->load->view('templates/header', [], TRUE) ?>
-
-    <div class="auth-body">
+<div class="auth-body">
         <div class="auth-card card-3d">
             <h2 class="auth-title"><i class="fas fa-sign-in-alt"></i> Masuk ke Akun Anda</h2>
             <p class="auth-subtitle">Selamat datang kembali! Silakan masuk untuk melanjutkan.</p>
 
-            <?php if (validation_errors()): ?>
-            <div class="auth-errors">
-                <?= validation_errors('<ul><li>', '</li></ul>') ?>
-            </div>
-            <?php endif; ?>
+            <div id="loginAlert" class="auth-alert" style="display:none"></div>
 
-            <?= form_open('auth/login') ?>
-                <?= form_hidden($this->security->get_csrf_token_name(), $this->security->get_csrf_hash()) ?>
+            <form id="loginForm" method="POST" action="<?= site_url('auth/login') ?>" novalidate>
+                <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
 
                 <div class="form-group">
                     <label><i class="fas fa-envelope"></i> Email</label>
                     <div class="input-icon-wrapper">
                         <span class="input-icon"><i class="fas fa-envelope"></i></span>
-                        <input type="email" name="email" class="form-control" placeholder="Masukkan email" value="<?= set_value('email') ?>" required autofocus>
+                        <input type="email" name="email" class="form-control" placeholder="Masukkan email" required autofocus>
                     </div>
                 </div>
 
@@ -38,10 +32,10 @@
                     <label for="remember">Ingat saya</label>
                 </div>
 
-                <button type="submit" class="btn-auth">
+                <button type="submit" class="btn-auth" id="loginBtn">
                     <i class="fas fa-sign-in-alt"></i> Masuk
                 </button>
-            <?= form_close() ?>
+            </form>
 
             <div class="auth-link">
                 <a href="<?= site_url('auth/reset_password') ?>">Lupa Password?</a>
@@ -55,4 +49,74 @@
         </div>
     </div>
 
-<?= $this->load->view('templates/footer', [], TRUE) ?>
+<script>
+(function() {
+    var form = document.getElementById('loginForm');
+    var btn = document.getElementById('loginBtn');
+    var alertBox = document.getElementById('loginAlert');
+    var submitting = false;
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (submitting) return;
+        submitting = true;
+
+        alertBox.style.display = 'none';
+
+        var params = new URLSearchParams(new FormData(form));
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', form.action, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState !== 4) return;
+
+            submitting = false;
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Masuk';
+
+            if (xhr.status === 200) {
+                try {
+                    var res = JSON.parse(xhr.responseText);
+                    if (res.success) {
+                        alertBox.className = 'auth-alert auth-alert-success';
+                        alertBox.innerHTML = '<i class="fas fa-check-circle"></i> Login berhasil, mengalihkan...';
+                        alertBox.style.display = '';
+                        setTimeout(function() { window.location.href = res.redirect; }, 800);
+                    } else {
+                        alertBox.className = 'auth-alert auth-alert-error';
+                        alertBox.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + res.message;
+                        alertBox.style.display = '';
+                        form.querySelector('[name="password"]').value = '';
+                        form.querySelector('[name="password"]').focus();
+                    }
+                } catch(ex) {
+                    alertBox.className = 'auth-alert auth-alert-error';
+                    alertBox.innerHTML = '<i class="fas fa-exclamation-circle"></i> Terjadi kesalahan, silakan coba lagi.';
+                    alertBox.style.display = '';
+                }
+            } else {
+                alertBox.className = 'auth-alert auth-alert-error';
+                alertBox.innerHTML = '<i class="fas fa-exclamation-circle"></i> Terjadi kesalahan, silakan coba lagi.';
+                alertBox.style.display = '';
+            }
+        };
+
+        xhr.onerror = function() {
+            submitting = false;
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Masuk';
+            alertBox.className = 'auth-alert auth-alert-error';
+            alertBox.innerHTML = '<i class="fas fa-exclamation-circle"></i> Koneksi gagal, periksa jaringan Anda.';
+            alertBox.style.display = '';
+        };
+
+        xhr.send(params.toString());
+    });
+})();
+</script>

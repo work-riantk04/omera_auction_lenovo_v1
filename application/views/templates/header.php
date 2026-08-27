@@ -14,51 +14,6 @@
             display: flex;
             flex-direction: column;
         }
-        .auth-page .auth-nav {
-            padding: 16px 24px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid var(--border-color);
-            background: rgba(10, 10, 15, 0.8);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
-        .auth-page .auth-nav .nav-logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-family: var(--font-heading);
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            text-decoration: none;
-            letter-spacing: 0.05em;
-        }
-        .auth-page .auth-nav .nav-logo i {
-            font-size: 1.2rem;
-        }
-        .auth-page .auth-nav .nav-logo:hover {
-            color: var(--accent-primary-light);
-        }
-        .auth-page .auth-nav .back-home {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--text-secondary);
-            font-size: 0.85rem;
-            font-weight: 500;
-            text-decoration: none;
-            padding: 8px 14px;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border-color);
-            transition: all var(--transition-fast);
-        }
-        .auth-page .auth-nav .back-home:hover {
-            color: var(--accent-primary-light);
-            border-color: var(--accent-primary);
-            background: rgba(124, 58, 237, 0.08);
-        }
         .auth-page .auth-body {
             flex: 1;
             display: flex;
@@ -250,6 +205,39 @@
         .auth-errors ul li {
             margin-bottom: 2px;
         }
+        .auth-alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 12px 14px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 18px;
+            font-size: 0.84rem;
+            line-height: 1.4;
+            animation: alertSlideIn 0.25s ease;
+        }
+        .auth-alert i {
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        .auth-alert-error {
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #f87171;
+        }
+        .auth-alert-success {
+            background: rgba(34, 197, 94, 0.08);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            color: #4ade80;
+        }
+        @keyframes alertSlideIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .btn-auth:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
         .password-strength {
             height: 4px;
             border-radius: 2px;
@@ -330,15 +318,91 @@
 </head>
 <body>
 
-<nav class="auth-nav">
-    <a href="<?= base_url('/') ?>" class="nav-logo">
-        <i class="fas fa-gavel"></i>
-        <span>OMERA AUCTION</span>
-    </a>
-    <a href="<?= base_url('/') ?>" class="back-home">
-        <i class="fas fa-arrow-left"></i> Kembali ke Beranda
-    </a>
+<nav class="navbar">
+    <div class="nav-container">
+        <a href="<?= base_url('/') ?>" class="nav-logo">
+            <i class="fas fa-gavel"></i>
+            <span>OMERA AUCTION</span>
+        </a>
+
+        <div class="nav-menu" id="navMenu">
+            <a href="<?= base_url('/') ?>" class="nav-link">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a href="<?= base_url('about') ?>" class="nav-link">
+                <i class="fas fa-info-circle"></i> About
+            </a>
+            <a href="<?= base_url('events/list') ?>" class="nav-link">
+                <i class="fas fa-calendar-alt"></i> Event
+            </a>
+            <a href="<?= base_url('contact') ?>" class="nav-link">
+                <i class="fas fa-envelope"></i> Contact Us
+            </a>
+        </div>
+
+        <div class="nav-actions">
+            <?php if ($this->session->userdata('logged_in')): ?>
+                <?php $role = $this->session->userdata('role'); ?>
+                <a href="<?= base_url($role === 'admin' ? 'admin/dashboard' : $role . '/dashboard') ?>" class="btn btn-primary btn-sm">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            <?php else: ?>
+                <a href="<?= site_url('auth/login') ?>" class="btn btn-outline btn-sm">
+                    <i class="fas fa-sign-in-alt"></i> Masuk
+                </a>
+                <a href="<?= site_url('auth/register') ?>" class="btn btn-primary btn-sm">
+                    <i class="fas fa-user-plus"></i> Daftar
+                </a>
+            <?php endif; ?>
+        </div>
+
+        <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+    </div>
 </nav>
+
+<div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-menu-header">
+        <a href="<?= base_url('/') ?>" class="nav-logo">
+            <i class="fas fa-gavel"></i>
+            <span>OMERA AUCTION</span>
+        </a>
+        <button class="mobile-close" id="mobileCloseBtn">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <div class="mobile-menu-body">
+        <a href="<?= base_url('/') ?>" class="mobile-link">
+            <i class="fas fa-home"></i> Home
+        </a>
+        <a href="<?= base_url('about') ?>" class="mobile-link">
+            <i class="fas fa-info-circle"></i> About
+        </a>
+        <a href="<?= base_url('events/list') ?>" class="mobile-link">
+            <i class="fas fa-calendar-alt"></i> Event
+        </a>
+        <a href="<?= base_url('contact') ?>" class="mobile-link">
+            <i class="fas fa-envelope"></i> Contact Us
+        </a>
+        <div class="mobile-divider"></div>
+        <?php if ($this->session->userdata('logged_in')): ?>
+            <?php $role = $this->session->userdata('role'); ?>
+            <a href="<?= base_url($role === 'admin' ? 'admin/dashboard' : $role . '/dashboard') ?>" class="mobile-link">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+        <?php else: ?>
+            <a href="<?= site_url('auth/login') ?>" class="mobile-link">
+                <i class="fas fa-sign-in-alt"></i> Masuk
+            </a>
+            <a href="<?= site_url('auth/register') ?>" class="mobile-link">
+                <i class="fas fa-user-plus"></i> Daftar
+            </a>
+        <?php endif; ?>
+    </div>
+</div>
 
 <?php if ($this->session->flashdata('success')): ?>
 <div class="flash-message flash-success" id="flashSuccess">

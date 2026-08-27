@@ -6,7 +6,7 @@ class Welcome extends CI_Controller {
 	public function __construct()
 	{
 		parent::__construct();
-		$this->load->model(['Event_model', 'Item_model', 'Contact_model']);
+		$this->load->model(['Event_model', 'Item_model', 'Contact_model', 'User_model']);
 		$this->load->helper(['url', 'form']);
 		$this->load->library(['session', 'form_validation']);
 	}
@@ -22,6 +22,11 @@ class Welcome extends CI_Controller {
 			$data['active_items'] = array_slice($all_items, 0, 12);
 		}
 		$data['active_events'] = $this->Event_model->get_active_events() ?: [];
+
+		$all_items = $all_items ?: [];
+		$data['total_items'] = count($all_items);
+		$data['total_bidders'] = $this->User_model->count_by_role('bidders');
+
 		$data['csrf_token_name'] = $this->security->get_csrf_token_name();
 		$data['csrf_hash'] = $this->security->get_csrf_hash();
 		$this->load->view('welcome_header', $data);

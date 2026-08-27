@@ -1,6 +1,4 @@
-<?= $this->load->view('templates/header', [], TRUE) ?>
-
-    <div class="auth-body">
+<div class="auth-body">
         <div class="auth-card card-3d">
             <h2 class="auth-title"><i class="fas fa-lock"></i> Buat Password Baru</h2>
             <p class="auth-subtitle">Masukkan password baru Anda di bawah ini</p>
@@ -46,5 +44,3 @@
             </div>
         </div>
     </div>
-
-<?= $this->load->view('templates/footer', [], TRUE) ?>

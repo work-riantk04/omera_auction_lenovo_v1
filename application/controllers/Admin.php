@@ -232,8 +232,22 @@ class Admin extends CI_Controller {
 	{
 		$data['title'] = 'Manage Items';
 		$data['items'] = $this->Item_model->get_all() ?: [];
+		$data['events'] = $this->Event_model->get_all() ?: [];
 		$this->load->view('admin/header', $data);
 		$this->load->view('admin/items', $data);
+		$this->load->view('admin/footer');
+	}
+
+	public function items_detail($id)
+	{
+		$data['item'] = $this->Item_model->get_by_id($id);
+		if (empty($data['item']))
+		{
+			show_404();
+		}
+		$data['title'] = 'Item Detail';
+		$this->load->view('admin/header', $data);
+		$this->load->view('admin/items_detail', $data);
 		$this->load->view('admin/footer');
 	}
 

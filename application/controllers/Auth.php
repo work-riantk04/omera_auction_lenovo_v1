@@ -25,7 +25,14 @@ class Auth extends CI_Controller {
 
 			if ($this->form_validation->run() === FALSE)
 			{
+				$errors = strip_tags(validation_errors('', '<br>'));
+				if ($this->input->is_ajax_request())
+				{
+					echo json_encode(['success' => FALSE, 'message' => $errors]);
+					exit;
+				}
 				$data['title'] = 'Login';
+				$data['login_error'] = $errors;
 				$this->load->view('templates/header', $data);
 				$this->load->view('auth/login', $data);
 				$this->load->view('templates/footer');
@@ -47,23 +54,29 @@ class Auth extends CI_Controller {
 					];
 					$this->session->set_userdata($session_data);
 
-					if ($user['role'] === 'admin')
+					$redirect_url = site_url($user['role'] === 'admin' ? 'admin' : ($user['role'] === 'titipers' ? 'titipers' : 'bidders'));
+
+					if ($this->input->is_ajax_request())
 					{
-						redirect('admin');
+						echo json_encode(['success' => TRUE, 'redirect' => $redirect_url]);
+						exit;
 					}
-					elseif ($user['role'] === 'titipers')
-					{
-						redirect('titipers');
-					}
-					else
-					{
-						redirect('bidders');
-					}
+
+					redirect($redirect_url);
 				}
 				else
 				{
-					$this->session->set_flashdata('error', 'Invalid email or password.');
-					redirect('auth/login');
+					if ($this->input->is_ajax_request())
+					{
+						echo json_encode(['success' => FALSE, 'message' => 'Email atau password salah.']);
+						exit;
+					}
+
+					$data['title'] = 'Login';
+					$data['login_error'] = 'Email atau password salah.';
+					$this->load->view('templates/header', $data);
+					$this->load->view('auth/login', $data);
+					$this->load->view('templates/footer');
 				}
 			}
 		}

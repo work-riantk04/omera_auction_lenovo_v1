@@ -89,7 +89,7 @@ class Item_model extends CI_Model {
 
     public function submit_to_event($data)
     {
-        $data['status']     = 'pending';
+        $data['status']     = 'submitted';
         $data['created_at'] = date('Y-m-d H:i:s');
         $data['updated_at'] = date('Y-m-d H:i:s');
         if ($this->db->insert($this->table, $data)) {

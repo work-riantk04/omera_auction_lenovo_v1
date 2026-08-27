@@ -1,6 +1,4 @@
-<?= $this->load->view('templates/header', [], TRUE) ?>
-
-    <div class="auth-body">
+<div class="auth-body">
         <div class="auth-card card-3d" style="max-width: 500px;">
             <h2 class="auth-title"><i class="fas fa-user-plus"></i> Buat Akun Baru</h2>
             <p class="auth-subtitle">Daftar untuk mulai menggunakan Omera Auction</p>
@@ -131,5 +129,3 @@ function checkPasswordStrength(password) {
     text.style.color = level.color;
 }
 </script>
-
-<?= $this->load->view('templates/footer', [], TRUE) ?>
