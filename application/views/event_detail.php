@@ -1,5 +1,3 @@
-<?php $this->load->view('welcome_header', ['title' => $event['name'], 'csrf_token_name' => $csrf_token_name, 'csrf_hash' => $csrf_hash]); ?>
-
 <section class="event-detail-hero">
     <div class="container">
         <div class="event-detail-banner card-3d">

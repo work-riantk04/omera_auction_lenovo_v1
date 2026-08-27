@@ -7,13 +7,26 @@
         document.querySelector('.sidebar').classList.toggle('open');
     }
 
-    document.addEventListener('click', function(e) {
-        const sidebar = document.querySelector('.sidebar');
-        const toggle = document.querySelector('.sidebar-toggle');
-        if (sidebar && sidebar.classList.contains('open') && !sidebar.contains(e.target) && !toggle.contains(e.target)) {
-            sidebar.classList.remove('open');
+    (function() {
+        var dd = document.getElementById('userDropdown');
+        if (dd) {
+            dd.querySelector('.user-dropdown-toggle').addEventListener('click', function(e) {
+                e.stopPropagation();
+                dd.classList.toggle('open');
+            });
         }
-    });
+
+        document.addEventListener('click', function(e) {
+            if (dd && !dd.contains(e.target)) {
+                dd.classList.remove('open');
+            }
+            var sidebar = document.querySelector('.sidebar');
+            var toggle = document.querySelector('.sidebar-toggle');
+            if (sidebar && sidebar.classList.contains('open') && !sidebar.contains(e.target) && (!toggle || !toggle.contains(e.target))) {
+                sidebar.classList.remove('open');
+            }
+        });
+    })();
 
     (function pollNotifications() {
         fetch('<?= site_url("api/notifications_count") ?>', { credentials: 'same-origin' })

@@ -7,13 +7,26 @@
             document.getElementById('sidebar').classList.toggle('open');
         }
 
-        document.addEventListener('click', function(e) {
-            const sidebar = document.getElementById('sidebar');
-            const toggle = document.querySelector('.sidebar-toggle');
-            if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== toggle && !toggle.contains(e.target)) {
-                sidebar.classList.remove('open');
+        (function() {
+            var dd = document.getElementById('userDropdown');
+            if (dd) {
+                dd.querySelector('.user-dropdown-toggle').addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dd.classList.toggle('open');
+                });
             }
-        });
+
+            document.addEventListener('click', function(e) {
+                if (dd && !dd.contains(e.target)) {
+                    dd.classList.remove('open');
+                }
+                var sidebar = document.getElementById('sidebar');
+                var toggle = document.querySelector('.sidebar-toggle');
+                if (sidebar && sidebar.classList.contains('open') && !sidebar.contains(e.target) && (!toggle || !toggle.contains(e.target))) {
+                    sidebar.classList.remove('open');
+                }
+            });
+        })();
 
         function pollNotifications() {
             fetch('<?= site_url("api/unread_count") ?>', {

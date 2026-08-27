@@ -24,9 +24,9 @@ class Admin extends CI_Controller {
 	public function dashboard()
 	{
 		$data['title'] = 'Admin Dashboard';
-		$events = $this->Event_model->get_all();
-		$items = $this->Item_model->get_all();
-		$invoices = $this->Invoice_model->get_all();
+		$events = $this->Event_model->get_all() ?: [];
+		$items = $this->Item_model->get_all() ?: [];
+		$invoices = $this->Invoice_model->get_all() ?: [];
 		$data['total_events'] = count($events);
 		$data['total_items'] = count($items);
 		$data['total_users'] = $this->User_model->count_all();
@@ -43,7 +43,7 @@ class Admin extends CI_Controller {
 	public function events()
 	{
 		$data['title'] = 'Manage Events';
-		$data['events'] = $this->Event_model->get_all();
+		$data['events'] = $this->Event_model->get_all() ?: [];
 		$this->load->view('admin/header', $data);
 		$this->load->view('admin/events', $data);
 		$this->load->view('admin/footer');
@@ -53,11 +53,12 @@ class Admin extends CI_Controller {
 	{
 		if ($this->input->server('REQUEST_METHOD') === 'POST')
 		{
-			$this->form_validation->set_rules('name', 'Event Name', 'required|trim');
+			$this->form_validation->set_rules('name', 'Event Name', 'required|trim|max_length[200]');
 			$this->form_validation->set_rules('description', 'Description', 'required|trim');
-			$this->form_validation->set_rules('start_date', 'Start Date', 'required');
-			$this->form_validation->set_rules('end_date', 'End Date', 'required');
-			$this->form_validation->set_rules('status', 'Status', 'required');
+			$this->form_validation->set_rules('item_collection_deadline', 'Item Collection Deadline', 'required');
+			$this->form_validation->set_rules('auction_start', 'Auction Start', 'required');
+			$this->form_validation->set_rules('auction_end', 'Auction End', 'required');
+			$this->form_validation->set_rules('status', 'Status', 'required|in_list[upcoming,collecting,verifying,active,completed,cancelled]');
 
 			if ($this->form_validation->run() === FALSE)
 			{
@@ -69,15 +70,44 @@ class Admin extends CI_Controller {
 			else
 			{
 				$insert = [
-					'name' => $this->input->post('name'),
-					'description' => $this->input->post('description'),
-					'start_date' => $this->input->post('start_date'),
-					'end_date' => $this->input->post('end_date'),
-					'status' => $this->input->post('status'),
-					'created_at' => date('Y-m-d H:i:s')
+					'name'                      => $this->input->post('name'),
+					'description'               => $this->input->post('description'),
+					'item_collection_deadline'  => $this->input->post('item_collection_deadline'),
+					'auction_start'             => $this->input->post('auction_start'),
+					'auction_end'               => $this->input->post('auction_end'),
+					'status'                    => $this->input->post('status'),
 				];
-				$this->Event_model->create($insert);
-				$this->session->set_flashdata('success', 'Event created successfully.');
+
+				if (isset($_FILES['banner_image']) && $_FILES['banner_image']['error'] === UPLOAD_ERR_OK)
+				{
+					$config['upload_path']   = FCPATH . 'uploads/events/';
+					$config['allowed_types'] = 'jpg|jpeg|png|gif|webp';
+					$config['max_size']      = 5120;
+					$config['encrypt_name']  = TRUE;
+
+					if (!is_dir($config['upload_path']))
+					{
+						mkdir($config['upload_path'], 0777, TRUE);
+					}
+
+					$this->upload->initialize($config);
+
+					if ($this->upload->do_upload('banner_image'))
+					{
+						$insert['banner_image'] = $this->upload->data('file_name');
+					}
+				}
+
+				$event_id = $this->Event_model->create($insert);
+
+				if ($event_id)
+				{
+					$this->session->set_flashdata('success', 'Event created successfully.');
+				}
+				else
+				{
+					$this->session->set_flashdata('error', 'Failed to create event. Please try again.');
+				}
 				redirect('admin/events');
 			}
 		}
@@ -100,11 +130,12 @@ class Admin extends CI_Controller {
 
 		if ($this->input->server('REQUEST_METHOD') === 'POST')
 		{
-			$this->form_validation->set_rules('name', 'Event Name', 'required|trim');
+			$this->form_validation->set_rules('name', 'Event Name', 'required|trim|max_length[200]');
 			$this->form_validation->set_rules('description', 'Description', 'required|trim');
-			$this->form_validation->set_rules('start_date', 'Start Date', 'required');
-			$this->form_validation->set_rules('end_date', 'End Date', 'required');
-			$this->form_validation->set_rules('status', 'Status', 'required');
+			$this->form_validation->set_rules('item_collection_deadline', 'Item Collection Deadline', 'required');
+			$this->form_validation->set_rules('auction_start', 'Auction Start', 'required');
+			$this->form_validation->set_rules('auction_end', 'Auction End', 'required');
+			$this->form_validation->set_rules('status', 'Status', 'required|in_list[upcoming,collecting,verifying,active,completed,cancelled]');
 
 			if ($this->form_validation->run() === FALSE)
 			{
@@ -116,15 +147,53 @@ class Admin extends CI_Controller {
 			else
 			{
 				$update = [
-					'name' => $this->input->post('name'),
-					'description' => $this->input->post('description'),
-					'start_date' => $this->input->post('start_date'),
-					'end_date' => $this->input->post('end_date'),
-					'status' => $this->input->post('status'),
-					'updated_at' => date('Y-m-d H:i:s')
+					'name'                      => $this->input->post('name'),
+					'description'               => $this->input->post('description'),
+					'item_collection_deadline'  => $this->input->post('item_collection_deadline'),
+					'auction_start'             => $this->input->post('auction_start'),
+					'auction_end'               => $this->input->post('auction_end'),
+					'status'                    => $this->input->post('status'),
 				];
-				$this->Event_model->update($id, $update);
-				$this->session->set_flashdata('success', 'Event updated successfully.');
+
+				if (isset($_FILES['banner_image']) && $_FILES['banner_image']['error'] === UPLOAD_ERR_OK)
+				{
+					$config['upload_path']   = FCPATH . 'uploads/events/';
+					$config['allowed_types'] = 'jpg|jpeg|png|gif|webp';
+					$config['max_size']      = 5120;
+					$config['encrypt_name']  = TRUE;
+
+					if (!is_dir($config['upload_path']))
+					{
+						mkdir($config['upload_path'], 0777, TRUE);
+					}
+
+					$this->upload->initialize($config);
+
+					if ($this->upload->do_upload('banner_image'))
+					{
+						$update['banner_image'] = $this->upload->data('file_name');
+
+						if (!empty($data['event']['banner_image']))
+						{
+							$old = FCPATH . 'uploads/events/' . $data['event']['banner_image'];
+							if (file_exists($old))
+							{
+								unlink($old);
+							}
+						}
+					}
+				}
+
+				$result = $this->Event_model->update($id, $update);
+
+				if ($result)
+				{
+					$this->session->set_flashdata('success', 'Event updated successfully.');
+				}
+				else
+				{
+					$this->session->set_flashdata('error', 'Failed to update event. Please try again.');
+				}
 				redirect('admin/events');
 			}
 		}
@@ -162,7 +231,7 @@ class Admin extends CI_Controller {
 	public function items()
 	{
 		$data['title'] = 'Manage Items';
-		$data['items'] = $this->Item_model->get_all();
+		$data['items'] = $this->Item_model->get_all() ?: [];
 		$this->load->view('admin/header', $data);
 		$this->load->view('admin/items', $data);
 		$this->load->view('admin/footer');
@@ -207,8 +276,8 @@ class Admin extends CI_Controller {
 	public function invoices()
 	{
 		$data['title'] = 'Manage Invoices';
-		$data['invoices'] = $this->Invoice_model->get_all();
-		$data['events'] = $this->Event_model->get_all();
+		$data['invoices'] = $this->Invoice_model->get_all() ?: [];
+		$data['events'] = $this->Event_model->get_all() ?: [];
 		$this->load->view('admin/header', $data);
 		$this->load->view('admin/invoices', $data);
 		$this->load->view('admin/footer');
@@ -265,7 +334,7 @@ class Admin extends CI_Controller {
 	public function shipping()
 	{
 		$data['title'] = 'Manage Shipping';
-		$data['shipping'] = $this->Shipping_model->get_all();
+		$data['shipping'] = $this->Shipping_model->get_all() ?: [];
 		$this->load->view('admin/header', $data);
 		$this->load->view('admin/shipping', $data);
 		$this->load->view('admin/footer');
@@ -308,7 +377,7 @@ class Admin extends CI_Controller {
 	public function disbursements()
 	{
 		$data['title'] = 'Manage Disbursements';
-		$data['disbursements'] = $this->Disbursement_model->get_all();
+		$data['disbursements'] = $this->Disbursement_model->get_all() ?: [];
 		$this->load->view('admin/header', $data);
 		$this->load->view('admin/disbursements', $data);
 		$this->load->view('admin/footer');
@@ -333,10 +402,126 @@ class Admin extends CI_Controller {
 	public function users()
 	{
 		$data['title'] = 'Manage Users';
-		$data['users'] = $this->User_model->get_all();
+		$data['users'] = $this->User_model->get_all() ?: [];
 		$this->load->view('admin/header', $data);
 		$this->load->view('admin/users', $data);
 		$this->load->view('admin/footer');
+	}
+
+	public function users_create()
+	{
+		if ($this->input->server('REQUEST_METHOD') === 'POST')
+		{
+			$this->form_validation->set_rules('name', 'Name', 'required|trim');
+			$this->form_validation->set_rules('email', 'Email', 'required|valid_email|trim|is_unique[users.email]');
+			$this->form_validation->set_rules('password', 'Password', 'required|min_length[6]');
+			$this->form_validation->set_rules('phone', 'Phone', 'trim');
+			$this->form_validation->set_rules('address', 'Address', 'trim');
+			$this->form_validation->set_rules('role', 'Role', 'required|in_list[admin,titipers,bidders]');
+
+			if ($this->form_validation->run() === FALSE)
+			{
+				$data['title'] = 'Create User';
+				$this->load->view('admin/header', $data);
+				$this->load->view('admin/users_create', $data);
+				$this->load->view('admin/footer');
+			}
+			else
+			{
+				$insert = [
+					'name'     => $this->input->post('name'),
+					'email'    => $this->input->post('email'),
+					'password' => $this->input->post('password'),
+					'phone'    => $this->input->post('phone'),
+					'address'  => $this->input->post('address'),
+					'role'     => $this->input->post('role'),
+				];
+				$this->User_model->register($insert);
+				$this->session->set_flashdata('success', 'User created successfully.');
+				redirect('admin/users');
+			}
+		}
+		else
+		{
+			$data['title'] = 'Create User';
+			$this->load->view('admin/header', $data);
+			$this->load->view('admin/users_create', $data);
+			$this->load->view('admin/footer');
+		}
+	}
+
+	public function users_edit($id)
+	{
+		$data['user'] = $this->User_model->get_by_id($id);
+		if (empty($data['user']))
+		{
+			show_404();
+		}
+
+		if ($this->input->server('REQUEST_METHOD') === 'POST')
+		{
+			$this->form_validation->set_rules('name', 'Name', 'required|trim');
+			$this->form_validation->set_rules('email', 'Email', 'required|valid_email|trim');
+			$this->form_validation->set_rules('phone', 'Phone', 'trim');
+			$this->form_validation->set_rules('address', 'Address', 'trim');
+			$this->form_validation->set_rules('role', 'Role', 'required|in_list[admin,titipers,bidders]');
+			$this->form_validation->set_rules('is_active', 'Status', 'required');
+
+			if ($this->form_validation->run() === FALSE)
+			{
+				$data['title'] = 'Edit User';
+				$this->load->view('admin/header', $data);
+				$this->load->view('admin/users_edit', $data);
+				$this->load->view('admin/footer');
+			}
+			else
+			{
+				$update = [
+					'name'      => $this->input->post('name'),
+					'email'     => $this->input->post('email'),
+					'phone'     => $this->input->post('phone'),
+					'address'   => $this->input->post('address'),
+					'role'      => $this->input->post('role'),
+					'is_active' => $this->input->post('is_active'),
+				];
+
+				if ($this->input->post('password'))
+				{
+					$update['password'] = password_hash($this->input->post('password'), PASSWORD_DEFAULT);
+				}
+
+				$this->User_model->update_profile($id, $update);
+				$this->session->set_flashdata('success', 'User updated successfully.');
+				redirect('admin/users');
+			}
+		}
+		else
+		{
+			$data['title'] = 'Edit User';
+			$this->load->view('admin/header', $data);
+			$this->load->view('admin/users_edit', $data);
+			$this->load->view('admin/footer');
+		}
+	}
+
+	public function users_delete($id)
+	{
+		$user = $this->User_model->get_by_id($id);
+		if (empty($user))
+		{
+			$this->session->set_flashdata('error', 'User not found.');
+			redirect('admin/users');
+		}
+
+		if ($user['role'] === 'admin')
+		{
+			$this->session->set_flashdata('error', 'Cannot delete admin user.');
+			redirect('admin/users');
+		}
+
+		$this->User_model->delete($id);
+		$this->session->set_flashdata('success', 'User deleted successfully.');
+		redirect('admin/users');
 	}
 
 	public function users_toggle($id)

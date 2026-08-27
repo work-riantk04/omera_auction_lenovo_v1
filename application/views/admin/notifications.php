@@ -29,7 +29,7 @@
                 </div>
                 <?php if (!$notif['is_read']): ?>
                     <form method="POST" action="<?= site_url('admin/notifications_read/' . $notif['id']) ?>" class="notification-read-form">
-                        <?= csrf_field() ?>
+                        <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
                         <button type="submit" class="btn btn-sm btn-outline" title="Mark as read"><i class="fas fa-check"></i></button>
                     </form>
                 <?php endif; ?>

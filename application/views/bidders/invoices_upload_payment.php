@@ -30,7 +30,7 @@
                 <h3 class="section-title"><i class="fas fa-cloud-upload-alt"></i> Upload Bukti Pembayaran</h3>
 
                 <form action="<?= site_url('bidders/invoices_upload_payment/' . $invoice['id']) ?>" method="POST" enctype="multipart/form-data" id="paymentUploadForm">
-                    <?= csrf_field() ?>
+                    <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
 
                     <div class="file-upload-area" id="uploadArea">
                         <input type="file" name="payment_proof" id="paymentFile" accept="image/*" style="display:none;" onchange="handleFileSelect(this)">

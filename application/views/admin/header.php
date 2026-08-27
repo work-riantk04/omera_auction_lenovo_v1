@@ -56,9 +56,18 @@
                         <i class="fas fa-bell"></i>
                         <span class="notif-badge" id="notifCount"></span>
                     </a>
-                    <div class="user-info">
-                        <img src="<?= $this->session->userdata('avatar') ? base_url('uploads/avatars/' . $this->session->userdata('avatar')) : base_url('assets/images/default-avatar.png') ?>" alt="Avatar" class="user-avatar">
-                        <span><?= $this->session->userdata('name') ?></span>
+                    <div class="user-dropdown" id="userDropdown">
+                        <button class="user-dropdown-toggle">
+                            <img src="<?= $this->session->userdata('avatar') ? base_url('uploads/avatars/' . $this->session->userdata('avatar')) : base_url('assets/images/default-avatar.svg') ?>" alt="Avatar" class="user-avatar">
+                            <span class="user-name"><?= $this->session->userdata('name') ?></span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="user-dropdown-menu">
+                            <a href="<?= site_url('admin/dashboard') ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                            <a href="<?= site_url('admin/settings') ?>"><i class="fas fa-cog"></i> Settings</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="<?= site_url('auth/logout') ?>" class="text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -78,7 +78,7 @@
                 </div>
             </div>
             <form id="verifyForm" method="POST">
-                <?= csrf_field() ?>
+                <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
                 <input type="hidden" name="item_id" id="verifyItemId">
                 <div class="form-group">
                     <label for="admin_note">Admin Note</label>

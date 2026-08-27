@@ -55,12 +55,12 @@
                             <td>
                                 <?php if ($inv['payment_status'] === 'paid'): ?>
                                     <form method="POST" action="<?= site_url('admin/invoices_verify_payment/' . $inv['id']) ?>" style="display:inline">
-                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
                                         <input type="hidden" name="status" value="verified">
                                         <button type="submit" class="btn btn-sm btn-success" title="Verify Payment"><i class="fas fa-check"></i> Verify</button>
                                     </form>
                                     <form method="POST" action="<?= site_url('admin/invoices_verify_payment/' . $inv['id']) ?>" style="display:inline">
-                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
                                         <input type="hidden" name="status" value="rejected">
                                         <button type="submit" class="btn btn-sm btn-danger" title="Reject Payment"><i class="fas fa-times"></i></button>
                                     </form>

@@ -49,14 +49,14 @@
                             <td>
                                 <?php if ($ship['status'] === 'pending'): ?>
                                     <form method="POST" action="<?= site_url('admin/shipping_verify/' . $ship['id']) ?>" style="display:inline">
-                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
                                         <input type="hidden" name="status" value="in_transit">
                                         <button type="submit" class="btn btn-sm btn-info" title="Notify Titipers / Start Shipping"><i class="fas fa-truck"></i> Ship</button>
                                     </form>
                                 <?php elseif ($ship['status'] === 'shipping'): ?>
                                     <?php if (!empty($ship['shipping_proof'])): ?>
                                         <form method="POST" action="<?= site_url('admin/shipping_verify/' . $ship['id']) ?>" style="display:inline">
-                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
                                             <input type="hidden" name="status" value="delivered">
                                             <button type="submit" class="btn btn-sm btn-primary" title="Verify Delivery"><i class="fas fa-box-open"></i> Verify Delivery</button>
                                         </form>
@@ -65,7 +65,7 @@
                                     <?php endif; ?>
                                 <?php elseif ($ship['status'] === 'delivered'): ?>
                                     <form method="POST" action="<?= site_url('admin/shipping_verify/' . $ship['id']) ?>" style="display:inline">
-                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
                                         <input type="hidden" name="status" value="verified">
                                         <button type="submit" class="btn btn-sm btn-success" title="Confirm & Trigger Disbursement"><i class="fas fa-check"></i> Confirm</button>
                                     </form>

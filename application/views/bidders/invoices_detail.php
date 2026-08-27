@@ -75,7 +75,7 @@ if (!$shipping) {
                 <div class="inv-payment-card">
                     <h3 class="section-title"><i class="fas fa-credit-card"></i> Upload Bukti Bayar</h3>
                     <form action="<?= site_url('bidders/invoices_upload_payment/' . $inv['id']) ?>" method="POST" enctype="multipart/form-data" id="paymentForm">
-                        <?= csrf_field() ?>
+                        <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
                         <div class="file-upload-area" id="uploadArea">
                             <input type="file" name="payment_proof" id="paymentFile" accept="image/*,.pdf" style="display:none;" onchange="handleFileSelect(this)">
                             <div class="upload-placeholder" id="uploadPlaceholder">
@@ -167,7 +167,7 @@ if (!$shipping) {
 
                     <?php if ($ship_status === 'shipping'): ?>
                         <form action="<?= site_url('bidders/invoices_confirm_delivery/' . $inv['id']) ?>" method="POST" style="margin-top:12px;">
-                            <?= csrf_field() ?>
+                            <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
                             <button type="submit" class="btn-confirm-delivery" onclick="return confirm('Konfirmasi bahwa Anda telah menerima barang?')">
                                 <i class="fas fa-box-open"></i> Barang Diterima
                             </button>

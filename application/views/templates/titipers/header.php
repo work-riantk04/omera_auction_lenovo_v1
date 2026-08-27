@@ -213,24 +213,97 @@
         .notif-badge:empty,
         .notif-badge[data-count="0"] { display: none; }
 
-        .user-info {
+        .user-dropdown {
+            position: relative;
+        }
+
+        .user-dropdown-toggle {
             display: flex;
             align-items: center;
             gap: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: background 0.2s;
         }
 
-        .user-avatar {
-            width: 36px;
-            height: 36px;
+        .user-dropdown-toggle:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .user-dropdown-toggle .user-avatar {
+            width: 34px;
+            height: 34px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid var(--border-color);
         }
 
-        .user-info span {
+        .user-dropdown-toggle .user-name {
             font-size: 0.85rem;
             font-weight: 500;
             color: var(--text-primary);
+        }
+
+        .user-dropdown-toggle .fa-chevron-down {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+
+        .user-dropdown.open .fa-chevron-down {
+            transform: rotate(180deg);
+        }
+
+        .user-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            min-width: 180px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .user-dropdown.open .user-dropdown-menu {
+            display: block;
+        }
+
+        .user-dropdown-menu a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: background 0.15s;
+        }
+
+        .user-dropdown-menu a:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .user-dropdown-menu a i {
+            width: 18px;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        .user-dropdown-menu .dropdown-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 4px 0;
+        }
+
+        .user-dropdown-menu .text-danger {
+            color: var(--danger);
         }
 
         .content-wrapper {
@@ -300,6 +373,9 @@
                 <a href="<?= site_url('titipers/notifications') ?>" class="<?= ($this->router->fetch_method() == 'notifications') ? 'active' : '' ?>">
                     <i class="fas fa-bell"></i> Notifikasi
                 </a>
+                <a href="<?= site_url('titipers/profile') ?>" class="<?= ($this->router->fetch_method() == 'profile') ? 'active' : '' ?>">
+                    <i class="fas fa-user-circle"></i> Profile
+                </a>
             </nav>
             <div class="sidebar-footer">
                 <a href="<?= site_url('auth/logout') ?>"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -313,9 +389,18 @@
                         <i class="fas fa-bell"></i>
                         <span class="notif-badge" id="notifCount"></span>
                     </a>
-                    <div class="user-info">
-                        <img src="<?= $this->session->userdata('avatar') ? base_url('uploads/avatars/'.$this->session->userdata('avatar')) : base_url('assets/images/default-avatar.png') ?>" alt="Avatar" class="user-avatar">
-                        <span><?= $this->session->userdata('name') ?></span>
+                    <div class="user-dropdown" id="userDropdown">
+                        <button class="user-dropdown-toggle">
+                            <img src="<?= $this->session->userdata('avatar') ? base_url('uploads/avatars/'.$this->session->userdata('avatar')) : base_url('assets/images/default-avatar.svg') ?>" alt="Avatar" class="user-avatar">
+                            <span class="user-name"><?= $this->session->userdata('name') ?></span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="user-dropdown-menu">
+                            <a href="<?= site_url('titipers/dashboard') ?>"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                            <a href="<?= site_url('titipers/profile') ?>"><i class="fas fa-user-circle"></i> Profile</a>
+                            <div class="dropdown-divider"></div>
+                            <a href="<?= site_url('auth/logout') ?>" class="text-danger"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                        </div>
                     </div>
                 </div>
             </div>

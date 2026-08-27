@@ -75,6 +75,11 @@ $route['admin/invoices'] = 'admin/invoices';
 $route['admin/shipping'] = 'admin/shipping';
 $route['admin/disbursements'] = 'admin/disbursements';
 $route['admin/notifications'] = 'admin/notifications';
+$route['admin/users'] = 'admin/users';
+$route['admin/users_create'] = 'admin/users_create';
+$route['admin/users_edit/(:num)'] = 'admin/users_edit/$1';
+$route['admin/users_delete/(:num)'] = 'admin/users_delete/$1';
+$route['admin/users_toggle/(:num)'] = 'admin/users_toggle/$1';
 $route['admin/settings'] = 'admin/settings';
 
 /*
@@ -87,6 +92,7 @@ $route['titipers/items'] = 'titipers/items';
 $route['titipers/events'] = 'titipers/events';
 $route['titipers/shipping'] = 'titipers/shipping';
 $route['titipers/notifications'] = 'titipers/notifications';
+$route['titipers/profile'] = 'titipers/profile';
 
 /*
 | -------------------------------------------------------------------------
@@ -98,6 +104,7 @@ $route['bidders/events'] = 'bidders/events';
 $route['bidders/bids'] = 'bidders/bids';
 $route['bidders/invoices'] = 'bidders/invoices';
 $route['bidders/notifications'] = 'bidders/notifications';
+$route['bidders/profile'] = 'bidders/profile';
 
 /*
 | -------------------------------------------------------------------------

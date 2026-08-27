@@ -1,5 +1,6 @@
 <div class="page-header">
-    <h1 class="page-title">Users</h1>
+    <h1 class="page-title"><i class="fas fa-users"></i> Manage Users</h1>
+    <a href="<?= site_url('admin/users_create') ?>" class="btn btn-primary btn-sm"><i class="fas fa-user-plus"></i> Create User</a>
 </div>
 
 <!-- Filter Tabs -->
@@ -50,16 +51,22 @@
                             </td>
                             <td><?= date('d M Y', strtotime($usr['created_at'])) ?></td>
                             <td>
-                                <form method="POST" action="<?= site_url('admin/users_toggle/' . $usr['id']) ?>" style="display:inline">
-                                    <?= csrf_field() ?>
-                                    <?php if ($usr['is_active']): ?>
-                                        <input type="hidden" name="is_active" value="0">
-                                        <button type="submit" class="btn btn-sm btn-danger" title="Deactivate"><i class="fas fa-ban"></i></button>
-                                    <?php else: ?>
-                                        <input type="hidden" name="is_active" value="1">
-                                        <button type="submit" class="btn btn-sm btn-success" title="Activate"><i class="fas fa-check"></i></button>
+                                <div class="action-buttons">
+                                    <a href="<?= site_url('admin/users_edit/' . $usr['id']) ?>" class="btn btn-sm btn-outline" title="Edit"><i class="fas fa-edit"></i></a>
+                                    <form method="POST" action="<?= site_url('admin/users_toggle/' . $usr['id']) ?>" style="display:inline">
+                                        <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
+                                        <?php if ($usr['is_active']): ?>
+                                            <input type="hidden" name="is_active" value="0">
+                                            <button type="submit" class="btn btn-sm btn-warning" title="Deactivate"><i class="fas fa-ban"></i></button>
+                                        <?php else: ?>
+                                            <input type="hidden" name="is_active" value="1">
+                                            <button type="submit" class="btn btn-sm btn-success" title="Activate"><i class="fas fa-check"></i></button>
+                                        <?php endif; ?>
+                                    </form>
+                                    <?php if ($usr['role'] !== 'admin'): ?>
+                                        <a href="<?= site_url('admin/users_delete/' . $usr['id']) ?>" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this user?')"><i class="fas fa-trash"></i></a>
                                     <?php endif; ?>
-                                </form>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>

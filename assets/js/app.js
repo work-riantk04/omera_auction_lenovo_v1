@@ -578,7 +578,6 @@
     initMobileNav();
     initQuickBids();
     initDragDropUpload();
-    startNotificationPolling();
   }
 
   if (document.readyState === 'loading') {

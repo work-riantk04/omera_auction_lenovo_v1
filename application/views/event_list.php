@@ -1,7 +1,5 @@
 <?php $title = 'Events'; ?>
 
-<?php $this->load->view('welcome_header', ['title' => $title]); ?>
-
 <section class="page-hero">
     <div class="container">
         <h1 class="page-hero-title"><i class="fas fa-calendar-alt"></i> Events</h1>

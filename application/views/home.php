@@ -120,7 +120,7 @@
                         </div>
                         <div class="price-row">
                             <span class="price-label">Tertinggi Saat Ini</span>
-                            <span class="price-value current">Rp <?= number_format($item['highest_bid'], 0, ',', '.') ?></span>
+                            <span class="price-value current">Rp <?= number_format($item['highest_bid'] ?? $item['starting_price'], 0, ',', '.') ?></span>
                         </div>
                     </div>
                     <div class="item-timer">

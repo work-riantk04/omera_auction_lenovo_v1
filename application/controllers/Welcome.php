@@ -91,7 +91,7 @@ class Welcome extends CI_Controller {
 		{
 			show_404();
 		}
-		$data['items'] = $this->Item_model->get_by_event_id($id);
+		$data['items'] = $this->Item_model->get_by_event_id($id) ?: [];
 		$data['csrf_token_name'] = $this->security->get_csrf_token_name();
 		$data['csrf_hash'] = $this->security->get_csrf_hash();
 		$this->load->view('welcome_header', $data);

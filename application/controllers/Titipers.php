@@ -25,7 +25,7 @@ class Titipers extends CI_Controller {
 	{
 		$data['title'] = 'Titipers Dashboard';
 		$user_id = $this->session->userdata('user_id');
-		$items = $this->Item_model->get_by_titipers_id($user_id);
+		$items = $this->Item_model->get_by_titipers_id($user_id) ?: [];
 		$data['total_items'] = count($items);
 		$data['active_items'] = count(array_filter($items, function ($item) {
 			return $item['status'] === 'approved';
@@ -43,7 +43,7 @@ class Titipers extends CI_Controller {
 			}
 		}
 		$data['total_revenue'] = $revenue;
-		$all_items = $this->Item_model->get_by_titipers_id($user_id);
+		$all_items = $this->Item_model->get_by_titipers_id($user_id) ?: [];
 		$data['recent_items'] = array_slice($all_items, 0, 5);
 		$this->load->view('templates/titipers/header', $data);
 		$this->load->view('titipers/dashboard', $data);
@@ -72,7 +72,7 @@ class Titipers extends CI_Controller {
 			if ($this->form_validation->run() === FALSE)
 			{
 				$data['title'] = 'Add Item';
-				$data['events'] = $this->Event_model->get_all();
+				$data['events'] = $this->Event_model->get_all() ?: [];
 				$this->load->view('templates/titipers/header', $data);
 				$this->load->view('titipers/items_add', $data);
 				$this->load->view('templates/titipers/footer');
@@ -124,7 +124,7 @@ class Titipers extends CI_Controller {
 		else
 		{
 			$data['title'] = 'Add Item';
-			$data['events'] = $this->Event_model->get_all();
+			$data['events'] = $this->Event_model->get_all() ?: [];
 			$this->load->view('templates/titipers/header', $data);
 			$this->load->view('titipers/items_add', $data);
 			$this->load->view('templates/titipers/footer');
@@ -245,7 +245,7 @@ class Titipers extends CI_Controller {
 	public function events()
 	{
 		$data['title'] = 'Events';
-		$data['events'] = $this->Event_model->get_all();
+		$data['events'] = $this->Event_model->get_all() ?: [];
 		$this->load->view('templates/titipers/header', $data);
 		$this->load->view('titipers/events', $data);
 		$this->load->view('templates/titipers/footer');
@@ -261,7 +261,7 @@ class Titipers extends CI_Controller {
 			show_404();
 		}
 
-		$all_items = $this->Item_model->get_by_titipers_id($user_id);
+		$all_items = $this->Item_model->get_by_titipers_id($user_id) ?: [];
 		$data['available_items'] = array_filter($all_items, function ($item) {
 			return $item['status'] === 'available';
 		});
@@ -377,5 +377,103 @@ class Titipers extends CI_Controller {
 		$this->load->view('templates/titipers/header', $data);
 		$this->load->view('titipers/notifications', $data);
 		$this->load->view('templates/titipers/footer');
+	}
+
+	public function profile()
+	{
+		$user_id = $this->session->userdata('user_id');
+		$this->load->model('User_model');
+
+		if ($this->input->server('REQUEST_METHOD') === 'POST')
+		{
+			if ($this->input->post('change_password') === '1')
+			{
+				$this->form_validation->set_rules('new_password', 'New Password', 'required|min_length[6]');
+				$this->form_validation->set_rules('confirm_password', 'Confirm Password', 'required|matches[new_password]');
+
+				if ($this->form_validation->run() === FALSE)
+				{
+					$data['title'] = 'My Profile';
+					$data['user'] = $this->User_model->get_by_id($user_id);
+					$this->load->view('templates/titipers/header', $data);
+					$this->load->view('titipers/profile', $data);
+					$this->load->view('templates/titipers/footer');
+				}
+				else
+				{
+					$this->User_model->change_password($user_id, $this->input->post('new_password'));
+					$this->session->set_flashdata('success', 'Password updated successfully.');
+					redirect('titipers/profile');
+				}
+			}
+			else
+			{
+				$this->form_validation->set_rules('name', 'Name', 'required|trim');
+				$this->form_validation->set_rules('email', 'Email', 'required|valid_email|trim');
+				$this->form_validation->set_rules('phone', 'Phone', 'trim');
+				$this->form_validation->set_rules('address', 'Address', 'trim');
+
+				if ($this->form_validation->run() === FALSE)
+				{
+					$data['title'] = 'My Profile';
+					$data['user'] = $this->User_model->get_by_id($user_id);
+					$this->load->view('templates/titipers/header', $data);
+					$this->load->view('titipers/profile', $data);
+					$this->load->view('templates/titipers/footer');
+				}
+				else
+				{
+					$update = [
+						'name'    => $this->input->post('name'),
+						'email'   => $this->input->post('email'),
+						'phone'   => $this->input->post('phone'),
+						'address' => $this->input->post('address'),
+					];
+
+					if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK)
+					{
+						$config['upload_path'] = FCPATH . 'uploads/avatars/';
+						$config['allowed_types'] = 'jpg|jpeg|png|gif';
+						$config['max_size'] = 2048;
+						$config['encrypt_name'] = TRUE;
+
+						if (!is_dir($config['upload_path']))
+						{
+							mkdir($config['upload_path'], 0777, TRUE);
+						}
+
+						$this->upload->initialize($config);
+
+						if ($this->upload->do_upload('avatar'))
+						{
+							$upload_data = $this->upload->data();
+							$update['avatar'] = $upload_data['file_name'];
+
+							$user = $this->User_model->get_by_id($user_id);
+							if (!empty($user['avatar']))
+							{
+								$old_avatar = FCPATH . 'uploads/avatars/' . $user['avatar'];
+								if (file_exists($old_avatar))
+								{
+									unlink($old_avatar);
+								}
+							}
+						}
+					}
+
+					$this->User_model->update_profile($user_id, $update);
+					$this->session->set_flashdata('success', 'Profile updated successfully.');
+					redirect('titipers/profile');
+				}
+			}
+		}
+		else
+		{
+			$data['title'] = 'My Profile';
+			$data['user'] = $this->User_model->get_by_id($user_id);
+			$this->load->view('templates/titipers/header', $data);
+			$this->load->view('titipers/profile', $data);
+			$this->load->view('templates/titipers/footer');
+		}
 	}
 }

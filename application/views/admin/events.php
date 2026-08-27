@@ -70,7 +70,7 @@
                                                 if ($st === $evt['status']) continue;
                                             ?>
                                                 <form method="POST" action="<?= site_url('admin/events_status/' . $evt['id']) ?>">
-                                                    <?= csrf_field() ?>
+                                                    <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
                                                     <input type="hidden" name="status" value="<?= $st ?>">
                                                     <button type="submit" class="dropdown-item"><i class="fas fa-arrow-right"></i> <?= ucfirst($st) ?></button>
                                                 </form>

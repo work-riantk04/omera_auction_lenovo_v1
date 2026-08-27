@@ -43,13 +43,13 @@
                             <td>
                                 <?php if ($disb['status'] === 'pending'): ?>
                                     <form method="POST" action="<?= site_url('admin/disbursements_process/' . $disb['id']) ?>" style="display:inline">
-                                        <?= csrf_field() ?>
+                                         <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
                                         <input type="hidden" name="status" value="paid">
                                         <button type="submit" class="btn btn-sm btn-success" title="Process Disbursement"><i class="fas fa-money-bill-wave"></i> Process</button>
                                     </form>
                                 <?php elseif ($disb['status'] === 'processed'): ?>
                                     <form method="POST" action="<?= site_url('admin/disbursements_process/' . $disb['id']) ?>" style="display:inline">
-                                        <?= csrf_field() ?>
+                                         <input type="hidden" name="<?= $this->security->get_csrf_token_name() ?>" value="<?= $this->security->get_csrf_hash() ?>">
                                         <input type="hidden" name="status" value="completed">
                                         <button type="submit" class="btn btn-sm btn-primary" title="Mark Complete"><i class="fas fa-check"></i> Complete</button>
                                     </form>

@@ -58,6 +58,7 @@ CREATE TABLE `items` (
   `titipers_id` INT NOT NULL,
   `name` VARCHAR(200) NOT NULL,
   `description` TEXT DEFAULT NULL,
+  `category` VARCHAR(100) DEFAULT NULL,
   `image` VARCHAR(255) DEFAULT NULL,
   `starting_price` DECIMAL(12,2) NOT NULL DEFAULT 0.00,
   `status` ENUM('available','submitted','approved','rejected','sold') NOT NULL DEFAULT 'available',
