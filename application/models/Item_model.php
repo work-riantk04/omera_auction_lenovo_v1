@@ -36,7 +36,7 @@ class Item_model extends CI_Model {
 
     public function get_all()
     {
-        $this->db->select('items.*, users.name as titipers_name, events.name as event_name');
+        $this->db->select('items.*, users.name as titipers_name, events.name as event_name, events.auction_end');
         $this->db->join('users', 'users.id = items.titipers_id', 'left');
         $this->db->join('events', 'events.id = items.event_id', 'left');
         $this->db->order_by('items.created_at', 'DESC');
@@ -49,7 +49,7 @@ class Item_model extends CI_Model {
 
     public function get_by_titipers_id($titipers_id)
     {
-        $this->db->select('items.*, events.name as event_name');
+        $this->db->select('items.*, events.name as event_name, events.auction_end');
         $this->db->join('events', 'events.id = items.event_id', 'left');
         $this->db->where('items.titipers_id', $titipers_id);
         $this->db->order_by('items.created_at', 'DESC');
@@ -62,8 +62,9 @@ class Item_model extends CI_Model {
 
     public function get_by_event_id($event_id)
     {
-        $this->db->select('items.*, users.name as titipers_name');
+        $this->db->select('items.*, users.name as titipers_name, events.auction_end');
         $this->db->join('users', 'users.id = items.titipers_id', 'left');
+        $this->db->join('events', 'events.id = items.event_id', 'left');
         $this->db->where('items.event_id', $event_id);
         $this->db->order_by('items.id', 'ASC');
         $query = $this->db->get($this->table);
@@ -75,8 +76,9 @@ class Item_model extends CI_Model {
 
     public function get_approved_by_event($event_id)
     {
-        $this->db->select('items.*, users.name as titipers_name');
+        $this->db->select('items.*, users.name as titipers_name, events.auction_end');
         $this->db->join('users', 'users.id = items.titipers_id', 'left');
+        $this->db->join('events', 'events.id = items.event_id', 'left');
         $this->db->where('items.event_id', $event_id);
         $this->db->where('items.status', 'approved');
         $this->db->order_by('items.id', 'ASC');

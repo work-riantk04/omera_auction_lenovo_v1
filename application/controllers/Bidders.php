@@ -34,6 +34,7 @@ class Bidders extends CI_Controller {
 			return $inv['payment_status'] === 'pending';
 		}));
 		$data['active_events'] = array_slice($this->Event_model->get_active_events() ?: [], 0, 5);
+		$data['recent_bids'] = array_slice($my_bids, 0, 5);
 		$this->load->view('templates/bidders/header', $data);
 		$this->load->view('bidders/dashboard', $data);
 		$this->load->view('templates/bidders/footer');
@@ -60,8 +61,8 @@ class Bidders extends CI_Controller {
 		}
 
 		$user_id = $this->session->userdata('user_id');
-		$data['items'] = $this->Item_model->get_by_event_id($event_id);
-		$all_user_bids = $this->Bid_model->get_by_bidder_id($user_id);
+		$data['items'] = $this->Item_model->get_by_event_id($event_id) ?: [];
+		$all_user_bids = $this->Bid_model->get_by_bidder_id($user_id) ?: [];
 		$item_ids = array_column($data['items'], 'id');
 		$data['user_bids'] = array_filter($all_user_bids, function ($bid) use ($item_ids) {
 			return in_array($bid['item_id'], $item_ids);

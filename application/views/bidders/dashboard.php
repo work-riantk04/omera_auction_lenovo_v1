@@ -70,7 +70,7 @@
             </div>
             <div class="card-body">
                 <?php
-                $recent_bids = $this->Bidders_model->get_by_bidder_id($this->session->userdata('user_id'));
+                $recent_bids = $recent_bids ?? [];
                 if (!empty($recent_bids)):
                     $shown = 0;
                     foreach ($recent_bids as $bid):
