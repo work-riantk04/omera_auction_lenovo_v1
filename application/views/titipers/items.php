@@ -210,11 +210,14 @@
                             <td>
                                 <div class="item-cell">
                                     <?php if (!empty($item['image'])): ?>
-                                        <img src="<?= base_url('uploads/items/' . $item['image']) ?>" alt="<?= $item['name'] ?>" class="item-thumb">
+                                        <img src="<?= base_url('uploads/items/' . $item['image']) ?>" alt="<?= $item['name'] ?>" class="item-thumb" onerror="this.onerror=null;this.src='<?= base_url('assets/images/placeholder-item.php') ?>'">
                                     <?php else: ?>
                                         <div class="item-thumb" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);"><i class="fas fa-image"></i></div>
                                     <?php endif; ?>
                                     <span class="item-cell-name"><?= $item['name'] ?></span>
+                                    <?php if ($item['status'] == 'rejected' && !empty($item['admin_note'])): ?>
+                                        <div style="font-size:0.72rem;color:var(--danger);max-width:220px;"><i class="fas fa-comment-dots"></i> <?= htmlspecialchars($item['admin_note']) ?></div>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                             <td><span class="badge badge-<?= $item['status'] ?>"><?= ucfirst($item['status']) ?></span></td>

@@ -42,6 +42,9 @@
                 <a href="<?= site_url('admin/notifications') ?>" class="<?= $this->router->fetch_method() == 'notifications' ? 'active' : '' ?>">
                     <i class="fas fa-bell"></i> Notifications
                 </a>
+                <a href="<?= site_url('admin/settings') ?>" class="<?= $this->router->fetch_method() == 'settings' ? 'active' : '' ?>">
+                    <i class="fas fa-cog"></i> Configurasi
+                </a>
             </nav>
             <div class="sidebar-footer">
                 <a href="<?= site_url('auth/logout') ?>"><i class="fas fa-sign-out-alt"></i> Logout</a>
@@ -50,7 +53,7 @@
         <!-- Main Content -->
         <main class="main-content">
             <div class="topbar">
-                <button class="sidebar-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                <button class="sidebar-toggle"><i class="fas fa-bars"></i></button>
                 <div class="topbar-right">
                     <a href="<?= site_url('admin/notifications') ?>" class="notification-bell" id="notifBell">
                         <i class="fas fa-bell"></i>
@@ -58,7 +61,7 @@
                     </a>
                     <div class="user-dropdown" id="userDropdown">
                         <button class="user-dropdown-toggle">
-                            <img src="<?= $this->session->userdata('avatar') ? base_url('uploads/avatars/' . $this->session->userdata('avatar')) : base_url('assets/images/default-avatar.svg') ?>" alt="Avatar" class="user-avatar">
+                            <img src="<?= $this->session->userdata('avatar') ? base_url('uploads/avatars/' . $this->session->userdata('avatar')) : base_url('assets/images/default-avatar.svg') ?>" alt="Avatar" class="user-avatar" onerror="this.onerror=null;this.src='<?= base_url('assets/images/default-avatar.svg') ?>'">
                             <span class="user-name"><?= $this->session->userdata('name') ?></span>
                             <i class="fas fa-chevron-down"></i>
                         </button>

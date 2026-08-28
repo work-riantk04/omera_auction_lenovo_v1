@@ -43,7 +43,7 @@
                         <span class="notif-badge" id="notifCount"></span>
                     </div>
                     <div class="user-info">
-                        <img src="<?= $this->session->userdata('avatar') ? base_url('uploads/avatars/'.$this->session->userdata('avatar')) : base_url('assets/images/default-avatar.svg') ?>" alt="Avatar" class="user-avatar">
+                        <img src="<?= $this->session->userdata('avatar') ? base_url('uploads/avatars/'.$this->session->userdata('avatar')) : base_url('assets/images/default-avatar.svg') ?>" alt="Avatar" class="user-avatar" onerror="this.onerror=null;this.src='<?= base_url('assets/images/default-avatar.svg') ?>'">
                         <span><?= $this->session->userdata('name') ?></span>
                     </div>
                 </div>

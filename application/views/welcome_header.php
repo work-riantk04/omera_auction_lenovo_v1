@@ -39,7 +39,7 @@
                     <button class="user-btn" id="userDropdownBtn">
                         <div class="user-avatar">
                             <?php if ($this->session->userdata('avatar')): ?>
-                                <img src="<?= base_url('uploads/avatars/' . $this->session->userdata('avatar')) ?>" alt="Avatar">
+                                <img src="<?= base_url('uploads/avatars/' . $this->session->userdata('avatar')) ?>" alt="Avatar" onerror="this.onerror=null;this.src='<?= base_url('assets/images/default-avatar.svg') ?>'">
                             <?php else: ?>
                                 <i class="fas fa-user"></i>
                             <?php endif; ?>

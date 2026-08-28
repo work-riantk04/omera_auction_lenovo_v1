@@ -145,6 +145,110 @@
         margin-bottom: 8px;
         display: block;
     }
+    .edit-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 8px;
+    }
+    .edit-gallery-item {
+        position: relative;
+        width: 130px;
+        height: 110px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 2px solid var(--border-color);
+        background: var(--bg-secondary);
+    }
+    .edit-gallery-item.is-primary {
+        border-color: var(--accent-primary);
+    }
+    .edit-gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .edit-gallery-item .primary-badge {
+        position: absolute;
+        bottom: 4px;
+        left: 4px;
+        background: rgba(0,0,0,0.65);
+        color: #ffd700;
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+    .edit-gallery-item .edit-controls {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        display: flex;
+        gap: 4px;
+    }
+    .edit-gallery-item .edit-controls label {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        background: rgba(0,0,0,0.6);
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.7rem;
+    }
+    .edit-gallery-item .edit-controls label input {
+        display: none;
+    }
+    .edit-gallery-item .edit-controls label:has(input:checked) {
+        color: #ffd700;
+    }
+    .edit-gallery-item .edit-controls label:has(input[type="checkbox"]:checked) {
+        color: var(--danger);
+    }
+    .multi-preview {
+        margin-top: 16px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .multi-preview .preview-item {
+        position: relative;
+        width: 120px;
+        height: 100px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+    }
+    .multi-preview .preview-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .multi-preview .preview-item .remove-preview {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.9);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        line-height: 1;
+    }
+    .multi-preview .preview-empty {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+    }
     .btn {
         display: inline-flex;
         align-items: center;
@@ -202,6 +306,19 @@
     </div>
 <?php endif; ?>
 
+<?php if ($item['status'] == 'rejected'): ?>
+    <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:16px 18px;margin-bottom:24px;color:var(--danger);">
+        <div style="font-weight:600;margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Barang ini ditolak admin. Silakan perbaiki sesuai catatan di bawah, lalu simpan untuk diverifikasi ulang.</div>
+        <div style="background:rgba(0,0,0,0.2);border-radius:6px;padding:12px 14px;font-size:0.85rem;color:var(--text-primary);">
+            <?php if (!empty($item['admin_note'])): ?>
+                <strong>Catatan Admin:</strong> <?= htmlspecialchars($item['admin_note']) ?>
+            <?php else: ?>
+                <em>Admin tidak memberikan catatan khusus.</em>
+            <?php endif; ?>
+        </div>
+    </div>
+<?php endif; ?>
+
 <div class="form-card">
     <?= form_open_multipart('titipers/items_edit/' . $item['id']) ?>
         <div class="form-group">
@@ -228,29 +345,55 @@
         </div>
 
         <div class="form-group">
-            <label>Foto Barang</label>
-            <?php if (!empty($item['image'])): ?>
-                <span class="current-image-label">Foto saat ini:</span>
-                <div class="image-preview" id="currentImagePreview">
-                    <img src="<?= base_url('uploads/items/' . $item['image']) ?>" alt="<?= $item['name'] ?>">
+            <label>Foto Barang (bisa lebih dari satu)</label>
+            <?php if (!empty($item['images'])): ?>
+                <span class="current-image-label">Foto saat ini — klik radio untuk menjadikan utama, centang untuk menghapus:</span>
+                <div class="edit-gallery">
+                    <?php foreach ($item['images'] as $img): ?>
+                    <div class="edit-gallery-item <?= !empty($img['is_primary']) ? 'is-primary' : '' ?>">
+                        <img src="<?= base_url('uploads/items/' . $img['image']) ?>" alt="" onerror="this.onerror=null;this.src='<?= base_url('assets/images/placeholder-item.php') ?>'">
+                        <?php if (!empty($img['is_primary'])): ?>
+                            <span class="primary-badge"><i class="fas fa-star"></i> Utama</span>
+                        <?php endif; ?>
+                        <div class="edit-controls">
+                            <label title="Jadikan foto utama">
+                                <input type="radio" name="primary_image" value="<?= $img['id'] ?>" <?= !empty($img['is_primary']) ? 'checked' : '' ?>>
+                                <i class="fas fa-star"></i>
+                            </label>
+                            <label title="Hapus foto">
+                                <input type="checkbox" name="remove_images[]" value="<?= $img['id'] ?>">
+                                <i class="fas fa-trash"></i>
+                            </label>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
                 </div>
+            <?php else: ?>
+                <span class="current-image-label">Belum ada foto. Silakan unggah di bawah.</span>
             <?php endif; ?>
-            <div class="file-upload-area" id="uploadArea" style="margin-top:12px;">
-                <input type="file" name="image" id="imageInput" accept="image/jpeg,image/png,image/gif">
+
+            <div class="file-upload-area" id="uploadArea" style="margin-top:16px;">
+                <input type="file" name="images[]" id="imagesInput" accept="image/jpeg,image/png,image/gif" multiple>
                 <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
-                <div class="upload-text">Klik untuk mengganti foto</div>
-                <div class="upload-hint">Format: JPG, PNG, GIF. Maks 2MB. Kosongkan jika tidak ingin mengubah.</div>
+                <div class="upload-text">Klik untuk menambah foto (bisa lebih dari satu)</div>
+                <div class="upload-hint">Format: JPG, PNG, GIF. Maks 2MB per file.</div>
             </div>
-            <div class="image-preview" id="newImagePreview" style="display:none;">
-                <img id="previewImg" src="" alt="Preview baru">
-                <button type="button" class="remove-preview" id="removePreview"><i class="fas fa-times"></i></button>
-            </div>
+            <div class="multi-preview" id="multiPreview"></div>
         </div>
 
         <div class="form-group">
             <label for="starting_price">Harga Mulai (Rp)</label>
             <input type="number" name="starting_price" id="starting_price" value="<?= set_value('starting_price', $item['starting_price']) ?>" min="0" step="1000" placeholder="0" required>
             <div class="form-help">Harga minimum yang ditawarkan saat lelang dimulai.</div>
+        </div>
+
+        <div class="form-group">
+            <label for="min_increment">Harga Kenaikan Minimal (Rp)</label>
+            <input type="number" name="min_increment" id="min_increment" value="<?= set_value('min_increment', $item['min_increment']) ?>" min="0" step="100" placeholder="0">
+            <div class="form-help">
+                Kelipatan bid minimum. Contoh: harga mulai 5000 dan kenaikan 500, maka bidders wajib bid 5500 / 6000 / 6500 / dst.
+                Kosongkan atau isi 0 jika tidak ingin membatasi.
+            </div>
         </div>
 
         <div class="form-actions">
@@ -262,26 +405,40 @@
 
 <script>
 (function() {
-    var input = document.getElementById('imageInput');
-    var newPreview = document.getElementById('newImagePreview');
-    var previewImg = document.getElementById('previewImg');
-    var removeBtn = document.getElementById('removePreview');
+    var input = document.getElementById('imagesInput');
+    var container = document.getElementById('multiPreview');
 
     input.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                previewImg.src = e.target.result;
-                newPreview.style.display = 'block';
-            };
-            reader.readAsDataURL(this.files[0]);
+        container.innerHTML = '';
+        var files = Array.prototype.slice.call(this.files || []);
+        if (files.length === 0) {
+            container.innerHTML = '<span class="preview-empty">Belum ada foto baru dipilih.</span>';
+            return;
         }
-    });
-
-    removeBtn.addEventListener('click', function() {
-        input.value = '';
-        newPreview.style.display = 'none';
-        previewImg.src = '';
+        files.forEach(function(file) {
+            if (!/^image\//.test(file.type)) return;
+            var item = document.createElement('div');
+            item.className = 'preview-item';
+            var img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'remove-preview';
+            btn.innerHTML = '<i class="fas fa-times"></i>';
+            btn.addEventListener('click', function() {
+                item.remove();
+                var dt = new DataTransfer();
+                var remaining = Array.prototype.slice.call(input.files).filter(function(f) { return f !== file; });
+                remaining.forEach(function(f) { dt.items.add(f); });
+                input.files = dt.files;
+                if (!remaining.length) {
+                    container.innerHTML = '<span class="preview-empty">Belum ada foto baru dipilih.</span>';
+                }
+            });
+            item.appendChild(img);
+            item.appendChild(btn);
+            container.appendChild(item);
+        });
     });
 })();
 </script>

@@ -67,6 +67,7 @@ class Titipers extends CI_Controller {
 			$this->form_validation->set_rules('name', 'Item Name', 'required|trim');
 			$this->form_validation->set_rules('description', 'Description', 'required|trim');
 			$this->form_validation->set_rules('starting_price', 'Starting Price', 'required|numeric');
+			$this->form_validation->set_rules('min_increment', 'Min Increment', 'numeric');
 			$this->form_validation->set_rules('category', 'Category', 'required|trim');
 
 			if ($this->form_validation->run() === FALSE)
@@ -79,44 +80,32 @@ class Titipers extends CI_Controller {
 			}
 			else
 			{
-				$config['upload_path'] = FCPATH . 'uploads/items/';
-				$config['allowed_types'] = 'jpg|jpeg|png|gif';
-				$config['max_size'] = 2048;
-				$config['encrypt_name'] = TRUE;
-
-				if (!is_dir($config['upload_path']))
+				$min_increment = $this->input->post('min_increment');
+				if ($min_increment === '' || $min_increment === NULL)
 				{
-					mkdir($config['upload_path'], 0777, TRUE);
-				}
-
-				$this->upload->initialize($config);
-				$image_name = '';
-
-				if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK)
-				{
-					if (!$this->upload->do_upload('image'))
-					{
-						$this->session->set_flashdata('error', $this->upload->display_errors());
-						redirect('titipers/items_add');
-					}
-					else
-					{
-						$upload_data = $this->upload->data();
-						$image_name = $upload_data['file_name'];
-					}
+					$min_increment = 0;
 				}
 
 				$insert = [
-					'titipers_id' => $this->session->userdata('user_id'),
-					'name' => $this->input->post('name'),
-					'description' => $this->input->post('description'),
+					'titipers_id'    => $this->session->userdata('user_id'),
+					'name'           => $this->input->post('name'),
+					'description'    => $this->input->post('description'),
 					'starting_price' => $this->input->post('starting_price'),
-					'category' => $this->input->post('category'),
-					'image' => $image_name,
-					'status' => 'available',
-					'created_at' => date('Y-m-d H:i:s')
+					'min_increment'  => $min_increment,
+					'category'       => $this->input->post('category'),
+					'image'          => '',
+					'status'         => 'available',
 				];
-				$this->Item_model->create($insert);
+				$item_id = $this->Item_model->create($insert);
+
+				if (!$item_id)
+				{
+					$this->session->set_flashdata('error', 'Failed to add item. Please try again.');
+					redirect('titipers/items_add');
+				}
+
+				$this->_handle_multiple_uploads($item_id);
+
 				$this->session->set_flashdata('success', 'Item added successfully.');
 				redirect('titipers/items');
 			}
@@ -146,6 +135,7 @@ class Titipers extends CI_Controller {
 			$this->form_validation->set_rules('name', 'Item Name', 'required|trim');
 			$this->form_validation->set_rules('description', 'Description', 'required|trim');
 			$this->form_validation->set_rules('starting_price', 'Starting Price', 'required|numeric');
+			$this->form_validation->set_rules('min_increment', 'Min Increment', 'numeric');
 			$this->form_validation->set_rules('category', 'Category', 'required|trim');
 
 			if ($this->form_validation->run() === FALSE)
@@ -157,48 +147,53 @@ class Titipers extends CI_Controller {
 			}
 			else
 			{
-				$update = [
-					'name' => $this->input->post('name'),
-					'description' => $this->input->post('description'),
-					'starting_price' => $this->input->post('starting_price'),
-					'category' => $this->input->post('category'),
-					'updated_at' => date('Y-m-d H:i:s')
-				];
-
-				$config['upload_path'] = FCPATH . 'uploads/items/';
-				$config['allowed_types'] = 'jpg|jpeg|png|gif';
-				$config['max_size'] = 2048;
-				$config['encrypt_name'] = TRUE;
-
-				if (!is_dir($config['upload_path']))
+				$min_increment = $this->input->post('min_increment');
+				if ($min_increment === '' || $min_increment === NULL)
 				{
-					mkdir($config['upload_path'], 0777, TRUE);
+					$min_increment = 0;
 				}
 
-				$this->upload->initialize($config);
+				$update = [
+					'name'           => $this->input->post('name'),
+					'description'    => $this->input->post('description'),
+					'starting_price' => $this->input->post('starting_price'),
+					'min_increment'  => $min_increment,
+					'category'       => $this->input->post('category'),
+					'updated_at'     => date('Y-m-d H:i:s')
+				];
 
-				if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK)
+				$remove_images = $this->input->post('remove_images');
+				if (is_array($remove_images))
 				{
-					if (!$this->upload->do_upload('image'))
+					foreach ($remove_images as $img_id)
 					{
-						$this->session->set_flashdata('error', $this->upload->display_errors());
-						redirect('titipers/items_edit/' . $id);
+						$this->Item_model->delete_image($img_id, $id);
 					}
-					else
-					{
-						$upload_data = $this->upload->data();
-						$update['image'] = $upload_data['file_name'];
+				}
 
-						$old_image = FCPATH . 'uploads/items/' . $data['item']['image'];
-						if (!empty($data['item']['image']) && file_exists($old_image))
-						{
-							unlink($old_image);
-						}
-					}
+				$primary_image = $this->input->post('primary_image');
+				if ($primary_image)
+				{
+					$this->Item_model->set_primary_image($id, $primary_image);
 				}
 
 				$this->Item_model->update($id, $update);
-				$this->session->set_flashdata('success', 'Item updated successfully.');
+
+				$existing_images = $this->Item_model->get_images($id);
+				$this->_handle_multiple_uploads($id, empty($existing_images));
+
+				if ($data['item']['status'] === 'rejected')
+				{
+					$this->Item_model->update($id, [
+						'status'     => 'submitted',
+						'admin_note' => ''
+					]);
+					$this->session->set_flashdata('success', 'Item updated. Silakan tunggu verifikasi ulang admin.');
+				}
+				else
+				{
+					$this->session->set_flashdata('success', 'Item updated successfully.');
+				}
 				redirect('titipers/items');
 			}
 		}
@@ -474,6 +469,65 @@ class Titipers extends CI_Controller {
 			$this->load->view('templates/titipers/header', $data);
 			$this->load->view('titipers/profile', $data);
 			$this->load->view('templates/titipers/footer');
+		}
+	}
+
+	private function _handle_multiple_uploads($item_id, $set_first_primary = TRUE)
+	{
+		$config['upload_path']   = FCPATH . 'uploads/items/';
+		$config['allowed_types'] = 'jpg|jpeg|png|gif';
+		$config['max_size']      = 2048;
+		$config['encrypt_name']  = TRUE;
+
+		if (!is_dir($config['upload_path']))
+		{
+			mkdir($config['upload_path'], 0777, TRUE);
+		}
+
+		if (!isset($_FILES['images']))
+		{
+			return;
+		}
+
+		$files  = $_FILES['images'];
+		$count  = (isset($files['name']) && is_array($files['name'])) ? count($files['name']) : 0;
+		$uploaded = 0;
+		$sort_start = (int) $this->Item_model->get_images_count($item_id);
+
+		for ($i = 0; $i < $count; $i++)
+		{
+			if (empty($files['name'][$i]) || $files['error'][$i] === UPLOAD_ERR_NO_FILE)
+			{
+				continue;
+			}
+
+			$_FILES['uploaded_file'] = array(
+				'name'     => $files['name'][$i],
+				'type'     => $files['type'][$i],
+				'tmp_name' => $files['tmp_name'][$i],
+				'error'    => $files['error'][$i],
+				'size'     => $files['size'][$i]
+			);
+
+			$this->upload->initialize($config);
+
+			if (!$this->upload->do_upload('uploaded_file'))
+			{
+				continue;
+			}
+
+			$upload_data = $this->upload->data();
+			$file_name   = $upload_data['file_name'];
+			$is_primary  = ($set_first_primary && $uploaded === 0) ? 1 : 0;
+
+			$this->Item_model->add_image($item_id, $file_name, $is_primary, $sort_start + $uploaded);
+
+			if ($is_primary)
+			{
+				$this->Item_model->update($item_id, array('image' => $file_name));
+			}
+
+			$uploaded++;
 		}
 	}
 }

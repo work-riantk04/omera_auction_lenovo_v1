@@ -55,7 +55,7 @@
                         <tr data-event="<?= htmlspecialchars($item['event_name'] ?? '') ?>" data-status="<?= $item['status'] ?>" data-name="<?= htmlspecialchars($item['name']) ?>">
                             <td>
                                 <?php if (!empty($item['image'])): ?>
-                                    <img src="<?= base_url('uploads/items/' . $item['image']) ?>" alt="" class="table-thumb">
+                                    <img src="<?= base_url('uploads/items/' . $item['image']) ?>" alt="" class="table-thumb" onerror="this.onerror=null;this.src='<?= base_url('assets/images/placeholder-item.php') ?>'">
                                 <?php else: ?>
                                     <div class="table-thumb-placeholder"><i class="fas fa-image"></i></div>
                                 <?php endif; ?>

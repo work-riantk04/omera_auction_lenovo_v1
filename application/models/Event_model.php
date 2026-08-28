@@ -30,17 +30,25 @@ class Event_model extends CI_Model {
         return FALSE;
     }
 
-    public function get_all()
+    public function get_all($limit = 0, $offset = 0)
     {
         $this->db->select('events.*, 
             (SELECT COUNT(*) FROM items WHERE items.event_id = events.id) as item_count,
             (SELECT COUNT(*) FROM bids WHERE bids.event_id = events.id) as bid_count');
+        if ($limit > 0) {
+            $this->db->limit($limit, $offset);
+        }
         $this->db->order_by('created_at', 'DESC');
         $query = $this->db->get($this->table);
         if ($query->num_rows() > 0) {
             return $query->result_array();
         }
         return FALSE;
+    }
+
+    public function count_all()
+    {
+        return (int) $this->db->count_all($this->table);
     }
 
     public function get_active_events()

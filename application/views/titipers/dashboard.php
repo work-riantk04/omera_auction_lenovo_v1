@@ -284,7 +284,7 @@
                 <?php foreach ($recent_items as $item): ?>
                     <div class="item-row">
                         <?php if (!empty($item['image'])): ?>
-                            <img src="<?= base_url('uploads/items/' . $item['image']) ?>" alt="<?= $item['name'] ?>" class="item-thumb">
+                            <img src="<?= base_url('uploads/items/' . $item['image']) ?>" alt="<?= $item['name'] ?>" class="item-thumb" onerror="this.onerror=null;this.src='<?= base_url('assets/images/placeholder-item.php') ?>'">
                         <?php else: ?>
                             <div class="item-thumb" style="display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:1.2rem;"><i class="fas fa-image"></i></div>
                         <?php endif; ?>

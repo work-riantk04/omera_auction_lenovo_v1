@@ -374,7 +374,7 @@
      TOGGLE SIDEBAR ON MOBILE
      ---------------------------------------------------------- */
   window.toggleSidebar = function () {
-    var sidebar = document.querySelector('.dashboard-sidebar');
+    var sidebar = document.querySelector('.dashboard-sidebar, .admin-wrapper .sidebar');
     if (sidebar) {
       sidebar.classList.toggle('open');
     }

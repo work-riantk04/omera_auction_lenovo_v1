@@ -47,14 +47,42 @@
                         $bid_count = count($item['bids']);
                     }
                     $current_price = $highest ? $highest['amount'] : $item['starting_price'];
-                    $min_bid = $highest ? $highest['amount'] + 1000 : $item['starting_price'];
+                    $increment = (float) ($item['min_increment'] ?? 0);
+                    $start_price = (float) $item['starting_price'];
+                    if ($increment > 0) {
+                        $base = $highest ? (float) $highest['amount'] : $start_price;
+                        $k = (int) floor(($base - $start_price) / $increment) + 1;
+                        $min_bid = $start_price + ($k * $increment);
+                    } else {
+                        $min_bid = $highest ? (float) $highest['amount'] + 1 : $start_price;
+                    }
                     $is_my_bid = $highest && $highest['bidder_id'] == $this->session->userdata('user_id');
-                    $item_image = !empty($item['image']) ? base_url('uploads/items/' . $item['image']) : base_url('assets/images/default-item.jpg');
+                    $item_image = !empty($item['image']) ? base_url('uploads/items/' . $item['image']) : base_url('assets/images/placeholder-item.php');
                     $is_over = ($event['status'] !== 'active');
                 ?>
                 <div class="item-card <?= $is_over ? 'item-ended' : '' ?>" id="item-<?= $item['id'] ?>">
                     <div class="item-image-wrap">
-                        <img src="<?= $item_image ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="item-image" onerror="this.src='<?= base_url('assets/images/default-item.jpg') ?>'">
+                        <?php $gallery = $item['images'] ?? array(); ?>
+                        <div class="gallery-slide" id="gallery-slide-<?= $item['id'] ?>">
+                            <?php if (!empty($gallery)): ?>
+                                <?php $i = 0; foreach ($gallery as $gimg): ?>
+                                    <img src="<?= base_url('uploads/items/' . $gimg['image']) ?>" data-gallery-index="<?= $i ?>" class="item-image <?= $i === 0 ? 'active' : '' ?>" alt="<?= htmlspecialchars($item['name']) ?>" onerror="this.parentNode.removeChild(this)">
+                                <?php $i++; endforeach; ?>
+                            <?php else: ?>
+                                <img src="<?= $item_image ?>" alt="<?= htmlspecialchars($item['name']) ?>" class="item-image active" onerror="this.onerror=null;this.src='<?= base_url('assets/images/placeholder-item.php') ?>'">
+                            <?php endif; ?>
+                        </div>
+                        <?php if (count($gallery) > 1): ?>
+                            <div class="gallery-nav">
+                                <button class="gallery-arrow gallery-prev" onclick="galleryNav(<?= $item['id'] ?>, -1)"><i class="fas fa-chevron-left"></i></button>
+                                <div class="gallery-dots" id="gallery-dots-<?= $item['id'] ?>">
+                                    <?php foreach ($gallery as $gi => $gimg): ?>
+                                        <span class="gallery-dot <?= $gi === 0 ? 'active' : '' ?>" data-dot-index="<?= $gi ?>" onclick="galleryGo(<?= $item['id'] ?>, <?= $gi ?>)"></span>
+                                    <?php endforeach; ?>
+                                </div>
+                                <button class="gallery-arrow gallery-next" onclick="galleryNav(<?= $item['id'] ?>, 1)"><i class="fas fa-chevron-right"></i></button>
+                            </div>
+                        <?php endif; ?>
                         <?php if ($is_my_bid && !$is_over): ?>
                             <span class="my-bid-badge"><i class="fas fa-crown"></i> Bid Anda Paling Tinggi</span>
                         <?php endif; ?>
@@ -102,10 +130,12 @@
                                            placeholder="Masukkan harga bid..."
                                            data-item="<?= $item['id'] ?>"
                                            data-min="<?= $min_bid ?>"
+                                           data-increment="<?= $increment ?>"
+                                           data-start="<?= $start_price ?>"
                                            oninput="formatBidInput(this)"
                                            onkeydown="if(event.key==='Enter'){placeBid(<?= $item['id'] ?>, <?= $event['id'] ?>)}">
                                 </div>
-                                <div class="bid-min-hint" id="bidmin-<?= $item['id'] ?>">Min: Rp <?= number_format($min_bid, 0, ',', '.') ?></div>
+                                <div class="bid-min-hint" id="bidmin-<?= $item['id'] ?>">Min: Rp <?= number_format($min_bid, 0, ',', '.') ?><?= $increment > 0 ? ' (kelipatan Rp ' . number_format($increment, 0, ',', '.') . ')' : '' ?></div>
                                 <button class="bid-btn" id="bidbtn-<?= $item['id'] ?>" onclick="placeBid(<?= $item['id'] ?>, <?= $event['id'] ?>)">
                                     <span class="bid-btn-text"><i class="fas fa-gavel"></i> Bid!</span>
                                     <span class="bid-btn-loading" style="display:none;"><i class="fas fa-spinner fa-spin"></i> Memproses...</span>
@@ -352,6 +382,16 @@
 }
 
 .item-card:hover .item-image { transform: scale(1.08); }
+
+.gallery-slide { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.gallery-slide img.item-image { display: none; }
+.gallery-slide img.item-image.active { display: block; }
+.gallery-nav { position: absolute; top: 0; left: 0; right: 0; height: 220px; display: none; justify-content: space-between; align-items: center; padding: 0 8px; pointer-events: none; z-index: 5; }
+.item-image-wrap:hover .gallery-nav { display: flex; }
+.gallery-arrow { pointer-events: auto; background: rgba(0,0,0,.45); color: #fff; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.gallery-dots { position: absolute; bottom: 8px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; }
+.gallery-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.6); cursor: pointer; display: inline-block; }
+.gallery-dot.active { background: #fff; }
 
 .my-bid-badge {
     position: absolute;
@@ -651,8 +691,16 @@
 
 <script>
 var CSRF_NAME = '<?= $this->security->get_csrf_token_name() ?>';
-var CSRF_HASH = '<?= $this->security->get_csrf_hash() ?>';
+var CSRF_COOKIE = '<?= config_item('csrf_cookie_name') ?>';
 var CURRENT_USER_ID = <?= $this->session->userdata('user_id') ?>;
+
+function getCsrfHash() {
+    var raw = document.cookie.match(new RegExp('(^|; )' + CSRF_COOKIE + '=([^;]*)'));
+    if (raw) {
+        return decodeURIComponent(raw[2]);
+    }
+    return '<?= $this->security->get_csrf_hash() ?>';
+}
 
 function formatBidInput(input) {
     var val = input.value.replace(/[^0-9]/g, '');
@@ -665,17 +713,60 @@ function parseBidValue(str) {
     return parseInt(str.replace(/[^0-9]/g, '')) || 0;
 }
 
+function gallerySlideEls(itemId) {
+    var slide = document.getElementById('gallery-slide-' + itemId);
+    return slide ? slide.querySelectorAll('img[data-gallery-index]') : [];
+}
+
+function galleryShow(itemId, idx) {
+    var imgs = gallerySlideEls(itemId);
+    var total = imgs.length;
+    if (total === 0) return;
+    var n = ((idx % total) + total) % total;
+    imgs.forEach(function (img) {
+        img.classList.toggle('active', parseInt(img.getAttribute('data-gallery-index')) === n);
+    });
+    var dots = document.getElementById('gallery-dots-' + itemId);
+    if (dots) {
+        dots.querySelectorAll('.gallery-dot').forEach(function (d) {
+            d.classList.toggle('active', parseInt(d.getAttribute('data-dot-index')) === n);
+        });
+    }
+}
+
+function galleryNav(itemId, dir) {
+    var slide = document.getElementById('gallery-slide-' + itemId);
+    var active = slide.querySelector('img.active');
+    var idx = active ? (parseInt(active.getAttribute('data-gallery-index')) || 0) : 0;
+    galleryShow(itemId, idx + dir);
+}
+
+function galleryGo(itemId, idx) {
+    galleryShow(itemId, idx);
+}
+
 function placeBid(itemId, eventId) {
     var input = document.getElementById('bid-input-' + itemId);
     var btn = document.getElementById('bidbtn-' + itemId);
     var result = document.getElementById('bidresult-' + itemId);
     var amount = parseBidValue(input.value);
     var min = parseInt(input.getAttribute('data-min')) || 0;
+    var inc = parseFloat(input.getAttribute('data-increment')) || 0;
+    var start = parseFloat(input.getAttribute('data-start')) || 0;
 
     if (!amount || amount < min) {
         result.className = 'bid-result error';
         result.textContent = 'Minimal bid: Rp ' + min.toLocaleString('id-ID');
         return;
+    }
+
+    if (inc > 0) {
+        var diff = amount - start;
+        if (diff % inc !== 0) {
+            result.className = 'bid-result error';
+            result.textContent = 'Bid harus kelipatan Rp ' + inc.toLocaleString('id-ID') + ' dari harga awal (contoh: ' + (start + inc).toLocaleString('id-ID') + ', dst.)';
+            return;
+        }
     }
 
     btn.disabled = true;
@@ -687,7 +778,7 @@ function placeBid(itemId, eventId) {
     var formData = new FormData();
     formData.append('item_id', itemId);
     formData.append('amount', amount);
-    formData.append(CSRF_NAME, CSRF_HASH);
+    formData.append(CSRF_NAME, getCsrfHash());
 
     fetch('<?= site_url("api/bid") ?>', {
         method: 'POST',
@@ -713,11 +804,17 @@ function placeBid(itemId, eventId) {
                 countEl.innerHTML = '<i class="fas fa-gavel"></i> ' + data.data.bid_count + ' bid';
             }
 
-            var newMin = data.data.highest_bid + 1000;
+            var newMin;
+            if (inc > 0) {
+                var k = Math.floor((data.data.highest_bid - start) / inc) + 1;
+                newMin = start + k * inc;
+            } else {
+                newMin = data.data.highest_bid + 1;
+            }
             input.setAttribute('data-min', newMin);
             input.value = '';
             var minHint = document.getElementById('bidmin-' + itemId);
-            if (minHint) minHint.textContent = 'Min: Rp ' + newMin.toLocaleString('id-ID');
+            if (minHint) minHint.textContent = 'Min: Rp ' + newMin.toLocaleString('id-ID') + (inc > 0 ? ' (kelipatan Rp ' + inc.toLocaleString('id-ID') + ')' : '');
 
             if (data.data.highest_bidder == CURRENT_USER_ID) {
                 var card = document.getElementById('item-' + itemId);

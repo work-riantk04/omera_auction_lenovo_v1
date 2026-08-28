@@ -36,11 +36,11 @@
                     elseif ($status === 'verifying') { $badge_class = 'badge-yellow'; $badge_text = 'Verifikasi'; }
 
                     $is_active_auction = ($status === 'active');
-                    $banner = !empty($event['banner_image']) ? base_url('uploads/events/' . $event['banner_image']) : base_url('assets/images/default-banner.jpg');
+                    $banner = !empty($event['banner_image']) ? base_url('uploads/events/' . $event['banner_image']) : base_url('assets/images/placeholder-event.php');
                 ?>
                 <div class="event-card <?= $filter_class ?>" data-status="<?= $status ?>">
                     <div class="event-banner">
-                        <img src="<?= $banner ?>" alt="<?= htmlspecialchars($event['name']) ?>" onerror="this.src='<?= base_url('assets/images/default-banner.jpg') ?>'">
+                        <img src="<?= $banner ?>" alt="<?= htmlspecialchars($event['name']) ?>" onerror="this.onerror=null;this.src='<?= base_url('assets/images/placeholder-event.php') ?>'">
                         <span class="event-badge <?= $badge_class ?>"><?= $badge_text ?></span>
                     </div>
                     <div class="event-card-body">

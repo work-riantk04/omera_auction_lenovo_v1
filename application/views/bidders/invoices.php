@@ -34,7 +34,7 @@
                             <td>
                                 <div class="item-cell">
                                     <?php if (!empty($inv['item_image'])): ?>
-                                        <img src="<?= base_url('uploads/items/' . $inv['item_image']) ?>" alt="" class="item-thumb" onerror="this.style.display='none'">
+                                        <img src="<?= base_url('uploads/items/' . $inv['item_image']) ?>" alt="" class="item-thumb" onerror="this.onerror=null;this.src='<?= base_url('assets/images/placeholder-item.php') ?>'">
                                     <?php endif; ?>
                                     <span><?= htmlspecialchars($inv['item_name'] ?? '-') ?></span>
                                 </div>

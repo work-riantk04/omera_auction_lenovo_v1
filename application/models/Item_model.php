@@ -29,7 +29,9 @@ class Item_model extends CI_Model {
         $this->db->where('items.id', $id);
         $query = $this->db->get($this->table);
         if ($query->num_rows() === 1) {
-            return $query->row_array();
+            $item = $query->row_array();
+            $item['images'] = $this->get_images($id);
+            return $item;
         }
         return FALSE;
     }
@@ -42,7 +44,8 @@ class Item_model extends CI_Model {
         $this->db->order_by('items.created_at', 'DESC');
         $query = $this->db->get($this->table);
         if ($query->num_rows() > 0) {
-            return $query->result_array();
+            $items = $query->result_array();
+            return $this->attach_bid_data($items);
         }
         return FALSE;
     }
@@ -69,7 +72,8 @@ class Item_model extends CI_Model {
         $this->db->order_by('items.id', 'ASC');
         $query = $this->db->get($this->table);
         if ($query->num_rows() > 0) {
-            return $query->result_array();
+            $items = $query->result_array();
+            return $this->attach_bid_data($items);
         }
         return FALSE;
     }
@@ -84,9 +88,38 @@ class Item_model extends CI_Model {
         $this->db->order_by('items.id', 'ASC');
         $query = $this->db->get($this->table);
         if ($query->num_rows() > 0) {
-            return $query->result_array();
+            $items = $query->result_array();
+            return $this->attach_bid_data($items);
         }
         return FALSE;
+    }
+
+    private function attach_bid_data(&$items)
+    {
+        $item_ids = array_column($items, 'id');
+        $images = array();
+        if (!empty($item_ids)) {
+            $this->db->where_in('item_id', $item_ids);
+            $this->db->order_by('is_primary', 'DESC');
+            $this->db->order_by('sort_order', 'ASC');
+            $this->db->order_by('id', 'ASC');
+            $rows = $this->db->get('item_images')->result_array();
+            foreach ($rows as $r) {
+                $images[$r['item_id']][] = $r;
+            }
+        }
+
+        foreach ($items as &$item) {
+            $item['images'] = isset($images[$item['id']]) ? $images[$item['id']] : array();
+            $this->db->select('bids.*, users.name as bidder_name');
+            $this->db->join('users', 'users.id = bids.bidder_id', 'left');
+            $this->db->where('bids.item_id', $item['id']);
+            $this->db->order_by('bids.amount', 'DESC', FALSE);
+            $bids = $this->db->get('bids')->result_array();
+            $item['bids'] = $bids;
+            $item['highest_bid'] = !empty($bids) ? (float) $bids[0]['amount'] : (float) $item['starting_price'];
+        }
+        return $items;
     }
 
     public function submit_to_event($data)
@@ -172,5 +205,95 @@ class Item_model extends CI_Model {
             return $query->result_array();
         }
         return FALSE;
+    }
+
+    public function get_images($item_id)
+    {
+        $this->db->where('item_id', $item_id);
+        $this->db->order_by('is_primary', 'DESC');
+        $this->db->order_by('sort_order', 'ASC');
+        $this->db->order_by('id', 'ASC');
+        $query = $this->db->get('item_images');
+        if ($query->num_rows() > 0) {
+            return $query->result_array();
+        }
+        return FALSE;
+    }
+
+    public function get_images_count($item_id)
+    {
+        return $this->db->where('item_id', $item_id)->count_all_results('item_images');
+    }
+
+    public function add_image($item_id, $image, $is_primary = 0, $sort_order = 0)
+    {
+        return $this->db->insert('item_images', array(
+            'item_id'    => $item_id,
+            'image'      => $image,
+            'is_primary' => $is_primary,
+            'sort_order' => $sort_order
+        ));
+    }
+
+    public function set_primary_image($item_id, $image_id)
+    {
+        $this->db->where('item_id', $item_id);
+        $this->db->update('item_images', array('is_primary' => 0));
+
+        $this->db->where('id', $image_id);
+        $this->db->where('item_id', $item_id);
+        $ok = $this->db->update('item_images', array('is_primary' => 1));
+
+        $img = $this->db->where('id', $image_id)->where('item_id', $item_id)->get('item_images')->row_array();
+        if ($img) {
+            $this->db->where('id', $item_id);
+            $this->db->update($this->table, array('image' => $img['image']));
+        }
+
+        return $ok;
+    }
+
+    public function delete_image($image_id, $item_id)
+    {
+        $this->db->where('id', $image_id);
+        $this->db->where('item_id', $item_id);
+        $query = $this->db->get('item_images');
+        $image = $query->row_array();
+        if (!$image) {
+            return FALSE;
+        }
+
+        $was_primary = (int) $image['is_primary'] === 1;
+
+        $this->db->where('id', $image_id);
+        $this->db->where('item_id', $item_id);
+        $this->db->delete('item_images');
+
+        $image_path = FCPATH . 'uploads/items/' . $image['image'];
+        if (file_exists($image_path)) {
+            unlink($image_path);
+        }
+
+        if ($was_primary) {
+            $this->reassign_primary($item_id);
+        }
+
+        return TRUE;
+    }
+
+    private function reassign_primary($item_id)
+    {
+        $images = $this->get_images($item_id);
+        if (!empty($images)) {
+            $first = $images[0];
+            $this->db->where('id', $first['id']);
+            $this->db->update('item_images', array('is_primary' => 1));
+
+            $this->db->where('id', $item_id);
+            $this->db->update($this->table, array('image' => $first['image']));
+        } else {
+            $this->db->where('id', $item_id);
+            $this->db->update($this->table, array('image' => NULL));
+        }
     }
 }

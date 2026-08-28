@@ -34,7 +34,7 @@
                             <td>
                                 <div class="event-name-cell">
                                     <?php if (!empty($evt['banner_image'])): ?>
-                                        <img src="<?= base_url('uploads/events/' . $evt['banner_image']) ?>" alt="" class="table-thumb">
+                                        <img src="<?= base_url('uploads/events/' . $evt['banner_image']) ?>" alt="" class="table-thumb" onerror="this.onerror=null;this.src='<?= base_url('assets/images/placeholder-event.php') ?>'">
                                     <?php else: ?>
                                         <div class="table-thumb-placeholder"><i class="fas fa-calendar"></i></div>
                                     <?php endif; ?>

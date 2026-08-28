@@ -1,7 +1,7 @@
 <?php
 $inv = $invoice;
 $status = $inv['payment_status'];
-$item_image = !empty($inv['item_image']) ? base_url('uploads/items/' . $inv['item_image']) : base_url('assets/images/default-item.jpg');
+$item_image = !empty($inv['item_image']) ? base_url('uploads/items/' . $inv['item_image']) : base_url('assets/images/placeholder-item.php');
 $shipping = !empty($inv['shipping_id']) ? $this->Shipping_model->get_by_id($inv['shipping_id']) : null;
 if (!$shipping) {
     $this->load->model('Shipping_model');
@@ -38,7 +38,7 @@ if (!$shipping) {
             <div class="inv-item-section">
                 <h3 class="section-title"><i class="fas fa-box"></i> Detail Item</h3>
                 <div class="inv-item-card">
-                    <img src="<?= $item_image ?>" alt="" class="inv-item-img" onerror="this.src='<?= base_url('assets/images/default-item.jpg') ?>'">
+                    <img src="<?= $item_image ?>" alt="" class="inv-item-img" onerror="this.onerror=null;this.src='<?= base_url('assets/images/placeholder-item.php') ?>'">
                     <div class="inv-item-info">
                         <h4><?= htmlspecialchars($inv['item_name'] ?? '-') ?></h4>
                         <p class="inv-item-event"><i class="fas fa-calendar"></i> <?= htmlspecialchars($inv['event_name'] ?? '-') ?></p>
@@ -581,7 +581,7 @@ function handleFileSelect(input) {
             reader.onload = function(e) { previewImg.src = e.target.result; };
             reader.readAsDataURL(file);
         } else {
-            previewImg.src = '<?= base_url("assets/images/default-item.jpg") ?>';
+            previewImg.src = '<?= base_url("assets/images/placeholder-item.php") ?>';
         }
     }
 }

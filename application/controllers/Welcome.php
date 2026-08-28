@@ -6,7 +6,7 @@ class Welcome extends CI_Controller {
 	public function __construct()
 	{
 		parent::__construct();
-		$this->load->model(['Event_model', 'Item_model', 'Contact_model', 'User_model']);
+		$this->load->model(['Event_model', 'Item_model', 'Contact_model', 'User_model', 'Setting_model']);
 		$this->load->helper(['url', 'form']);
 		$this->load->library(['session', 'form_validation']);
 	}
@@ -29,6 +29,7 @@ class Welcome extends CI_Controller {
 
 		$data['csrf_token_name'] = $this->security->get_csrf_token_name();
 		$data['csrf_hash'] = $this->security->get_csrf_hash();
+		$data['settings'] = $this->Setting_model->get_all();
 		$this->load->view('welcome_header', $data);
 		$this->load->view('home', $data);
 		$this->load->view('welcome_footer');
@@ -39,6 +40,7 @@ class Welcome extends CI_Controller {
 		$data['title'] = 'About';
 		$data['csrf_token_name'] = $this->security->get_csrf_token_name();
 		$data['csrf_hash'] = $this->security->get_csrf_hash();
+		$data['settings'] = $this->Setting_model->get_all();
 		$this->load->view('about', $data);
 	}
 
@@ -47,6 +49,7 @@ class Welcome extends CI_Controller {
 		$data['title'] = 'Contact Us';
 		$data['csrf_token_name'] = $this->security->get_csrf_token_name();
 		$data['csrf_hash'] = $this->security->get_csrf_hash();
+		$data['settings'] = $this->Setting_model->get_all();
 		$this->load->view('contact', $data);
 	}
 
@@ -80,7 +83,10 @@ class Welcome extends CI_Controller {
 	public function events()
 	{
 		$data['title'] = 'Events';
-		$data['events'] = $this->Event_model->get_all();
+		$event_limit = 10;
+		$data['events'] = $this->Event_model->get_all($event_limit, 0) ?: [];
+		$data['total_events'] = $this->Event_model->count_all();
+		$data['has_more'] = $data['total_events'] > $event_limit;
 		$data['csrf_token_name'] = $this->security->get_csrf_token_name();
 		$data['csrf_hash'] = $this->security->get_csrf_hash();
 		$this->load->view('welcome_header', $data);

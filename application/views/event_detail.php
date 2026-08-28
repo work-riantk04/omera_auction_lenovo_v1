@@ -2,7 +2,7 @@
     <div class="container">
         <div class="event-detail-banner card-3d">
             <?php if ($event['banner_image']): ?>
-                <img src="<?= base_url('uploads/events/' . $event['banner_image']) ?>" alt="<?= htmlspecialchars($event['name']) ?>" class="event-banner-img">
+                <img src="<?= base_url('uploads/events/' . $event['banner_image']) ?>" alt="<?= htmlspecialchars($event['name']) ?>" class="event-banner-img" onerror="this.onerror=null;this.src='<?= base_url('assets/images/placeholder-event.php') ?>'">
             <?php else: ?>
                 <div class="event-banner-placeholder">
                     <i class="fas fa-gavel"></i>
@@ -26,6 +26,18 @@
 </section>
 
 <?php if ($event['status'] === 'active' && strtotime($event['auction_end']) > time()): ?>
+<style>
+.gallery-slide { position: relative; width: 100%; height: 220px; overflow: hidden; background: #f0f2f5; display:flex; align-items:center; justify-content:center; }
+.gallery-slide img { width: 100%; height: 100%; object-fit: cover; display: none; }
+.gallery-slide img.active { display: block; }
+.gallery-slide .item-placeholder { display:flex; flex-direction:column; align-items:center; color:#9aa5b1; gap:8px; }
+.gallery-nav { position: absolute; top: 0; left: 0; right: 0; height: 220px; display: none; justify-content: space-between; align-items: center; padding: 0 8px; pointer-events: none; }
+.item-image:hover .gallery-nav { display: flex; }
+.gallery-arrow { pointer-events: auto; background: rgba(0,0,0,.45); color: #fff; border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; display:flex; align-items:center; justify-content:center; }
+.gallery-dots { position: absolute; bottom: 8px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; }
+.gallery-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.6); cursor: pointer; display:inline-block; }
+.gallery-dot.active { background: #fff; }
+</style>
 <section class="event-countdown-section">
     <div class="container">
         <div class="event-countdown-bar card-3d">
@@ -53,11 +65,30 @@
                 <?php foreach ($items as $item): ?>
                 <div class="item-card card-3d">
                     <div class="item-image">
-                        <?php if (!empty($item['image'])): ?>
-                            <img src="<?= base_url('uploads/items/' . $item['image']) ?>" alt="<?= htmlspecialchars($item['name']) ?>">
-                        <?php else: ?>
-                            <div class="item-placeholder">
-                                <i class="fas fa-image"></i>
+                        <?php $gallery = $item['images'] ?? array(); ?>
+                        <div class="gallery-slide" id="gallery-slide-<?= $item['id'] ?>">
+                            <?php if (!empty($gallery)): ?>
+                                <?php $i = 0; foreach ($gallery as $gimg): ?>
+                                    <?php $gi = $gimg['image']; ?>
+                                    <img src="<?= base_url('uploads/items/' . $gi) ?>" data-gallery-index="<?= $i ?>" class="<?= $i === 0 ? 'active' : '' ?>" alt="<?= htmlspecialchars($item['name']) ?>" onerror="this.parentNode.removeChild(this)">
+                                <?php $i++; endforeach; ?>
+                            <?php elseif (!empty($item['image'])): ?>
+                                <img src="<?= base_url('uploads/items/' . $item['image']) ?>" class="active" alt="<?= htmlspecialchars($item['name']) ?>" onerror="this.onerror=null;this.src='<?= base_url('assets/images/placeholder-item.php') ?>'">
+                            <?php else: ?>
+                                <div class="item-placeholder">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                        <?php if (count($gallery) > 1): ?>
+                            <div class="gallery-nav">
+                                <button class="gallery-arrow gallery-prev" onclick="galleryNav(<?= $item['id'] ?>, -1)"><i class="fas fa-chevron-left"></i></button>
+                                <div class="gallery-dots" id="gallery-dots-<?= $item['id'] ?>">
+                                    <?php foreach ($gallery as $gi => $gimg): ?>
+                                        <span class="gallery-dot <?= $gi === 0 ? 'active' : '' ?>" data-dot-index="<?= $gi ?>" onclick="galleryGo(<?= $item['id'] ?>, <?= $gi ?>)"></span>
+                                    <?php endforeach; ?>
+                                </div>
+                                <button class="gallery-arrow gallery-next" onclick="galleryNav(<?= $item['id'] ?>, 1)"><i class="fas fa-chevron-right"></i></button>
                             </div>
                         <?php endif; ?>
                         <?php if ($item['status'] === 'sold'): ?>
@@ -92,7 +123,7 @@
                     </div>
                     <div class="item-footer">
                         <?php if ($event['status'] === 'active' && $this->session->userdata('logged_in') && $this->session->userdata('role') === 'bidders' && strtotime($event['auction_end']) > time()): ?>
-                            <button class="btn btn-primary btn-block bid-btn" onclick="openBidModal(<?= $item['id'] ?>, <?= $item['highest_bid'] ?>, '<?= htmlspecialchars(addslashes($item['name'])) ?>')">
+                            <button class="btn btn-primary btn-block bid-btn" onclick="openBidModal(<?= $item['id'] ?>, <?= $item['highest_bid'] ?>, '<?= htmlspecialchars(addslashes($item['name'])) ?>', <?= (float)($item['min_increment'] ?? 0) ?>, <?= (float)$item['starting_price'] ?>)">
                                 <i class="fas fa-gavel"></i> Bid Sekarang
                             </button>
                         <?php elseif ($event['status'] === 'active' && strtotime($event['auction_end']) > time()): ?>
@@ -182,16 +213,28 @@
 <?php endif; ?>
 
 <script>
-function openBidModal(itemId, currentHighest, itemName) {
+function openBidModal(itemId, currentHighest, itemName, increment, start) {
+    increment = increment || 0;
+    start = start || currentHighest;
     document.getElementById('bidItemId').value = itemId;
     document.getElementById('bidItemName').textContent = itemName;
+    document.getElementById('bidItemId').setAttribute('data-increment', increment);
+    document.getElementById('bidItemId').setAttribute('data-start', start);
     document.getElementById('bidCurrentPrice').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(currentHighest);
-    const minBid = parseInt(currentHighest) + 1;
-    document.getElementById('bidMinHint').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(minBid);
+    const minBid = getMinBid(currentHighest, increment, start);
+    document.getElementById('bidMinHint').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(minBid) + (increment > 0 ? ' (kelipatan Rp ' + new Intl.NumberFormat('id-ID').format(increment) + ')' : '');
     document.getElementById('bidAmount').min = minBid;
     document.getElementById('bidAmount').value = minBid;
     document.getElementById('bidResult').style.display = 'none';
     openModal('bidModal');
+}
+
+function getMinBid(currentHighest, increment, start) {
+    if (increment > 0) {
+        var k = Math.floor((currentHighest - start) / increment) + 1;
+        return start + k * increment;
+    }
+    return parseInt(currentHighest) + 1;
 }
 
 function submitBid(e) {
@@ -199,6 +242,28 @@ function submitBid(e) {
     const form = document.getElementById('bidForm');
     const btn = document.getElementById('bidSubmitBtn');
     const result = document.getElementById('bidResult');
+    const itemInput = document.getElementById('bidItemId');
+    const inc = parseFloat(itemInput.getAttribute('data-increment')) || 0;
+    const start = parseFloat(itemInput.getAttribute('data-start')) || 0;
+    const amount = parseFloat(document.getElementById('bidAmount').value);
+    const minBid = getMinBid(parseFloat(document.getElementById('bidCurrentPrice').textContent.replace(/[^0-9]/g, '')) || start, inc, start);
+
+    if (!amount || amount < minBid) {
+        result.style.display = 'block';
+        result.className = 'bid-result bid-error';
+        result.innerHTML = '<i class="fas fa-exclamation-circle"></i> Minimal bid: Rp ' + new Intl.NumberFormat('id-ID').format(minBid);
+        return;
+    }
+
+    if (inc > 0) {
+        var diff = amount - start;
+        if (diff % inc !== 0) {
+            result.style.display = 'block';
+            result.className = 'bid-result bid-error';
+            result.innerHTML = '<i class="fas fa-exclamation-circle"></i> Bid harus kelipatan Rp ' + new Intl.NumberFormat('id-ID').format(inc) + ' dari harga awal (contoh: ' + new Intl.NumberFormat('id-ID').format(start + inc) + ', dst.)';
+            return;
+        }
+    }
 
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
@@ -221,8 +286,8 @@ function submitBid(e) {
             if (highestEl) highestEl.textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(data.data.highest_bid);
             if (countEl) countEl.textContent = data.data.bid_count;
             document.getElementById('bidCurrentPrice').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(data.data.highest_bid);
-            const newMin = parseInt(data.data.highest_bid) + 1;
-            document.getElementById('bidMinHint').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(newMin);
+            const newMin = getMinBid(data.data.highest_bid, inc, start);
+            document.getElementById('bidMinHint').textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(newMin) + (inc > 0 ? ' (kelipatan Rp ' + new Intl.NumberFormat('id-ID').format(inc) + ')' : '');
             document.getElementById('bidAmount').min = newMin;
             document.getElementById('bidAmount').value = newMin;
         } else {
@@ -241,6 +306,38 @@ function submitBid(e) {
     });
 
     return false;
+}
+
+function gallerySlideEls(itemId) {
+    var slide = document.getElementById('gallery-slide-' + itemId);
+    return slide ? slide.querySelectorAll('img[data-gallery-index]') : [];
+}
+
+function galleryShow(itemId, idx) {
+    var imgs = gallerySlideEls(itemId);
+    var total = imgs.length;
+    if (total === 0) return;
+    var n = ((idx % total) + total) % total;
+    imgs.forEach(function (img) {
+        img.classList.toggle('active', parseInt(img.getAttribute('data-gallery-index')) === n);
+    });
+    var dots = document.getElementById('gallery-dots-' + itemId);
+    if (dots) {
+        dots.querySelectorAll('.gallery-dot').forEach(function (d) {
+            d.classList.toggle('active', parseInt(d.getAttribute('data-dot-index')) === n);
+        });
+    }
+}
+
+function galleryNav(itemId, dir) {
+    var slide = document.getElementById('gallery-slide-' + itemId);
+    var active = slide.querySelector('img.active');
+    var idx = active ? (parseInt(active.getAttribute('data-gallery-index')) || 0) : 0;
+    galleryShow(itemId, idx + dir);
+}
+
+function galleryGo(itemId, idx) {
+    galleryShow(itemId, idx);
 }
 </script>
 

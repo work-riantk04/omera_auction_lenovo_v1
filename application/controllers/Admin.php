@@ -11,7 +11,7 @@ class Admin extends CI_Controller {
 			$this->session->set_flashdata('error', 'You must be logged in as admin.');
 			redirect('auth/login');
 		}
-		$this->load->model(['Event_model', 'Item_model', 'Invoice_model', 'Shipping_model', 'User_model', 'Notification_model', 'Disbursement_model']);
+		$this->load->model(['Event_model', 'Item_model', 'Invoice_model', 'Shipping_model', 'User_model', 'Notification_model', 'Disbursement_model', 'Setting_model']);
 		$this->load->helper(['url', 'form']);
 		$this->load->library(['session', 'form_validation', 'upload']);
 	}
@@ -577,5 +577,50 @@ class Admin extends CI_Controller {
 		$this->Notification_model->mark_all_as_read($user_id);
 		$this->session->set_flashdata('success', 'All notifications marked as read.');
 		redirect('admin/notifications');
+	}
+
+	public function settings()
+	{
+		$data['title'] = 'Settings';
+		$data['settings'] = $this->Setting_model->get_all();
+		$data['defaults'] = $this->Setting_model->default_settings();
+		$data['csrf_token_name'] = $this->security->get_csrf_token_name();
+		$data['csrf_hash'] = $this->security->get_csrf_hash();
+		$this->load->view('admin/header', $data);
+		$this->load->view('admin/settings', $data);
+		$this->load->view('admin/footer');
+	}
+
+	public function settings_save()
+	{
+		$groups = array('home', 'about', 'contact');
+
+		foreach ($groups as $group)
+		{
+			$posted = $this->input->post($group);
+			if (!is_array($posted))
+			{
+				continue;
+			}
+
+			$clean = array();
+			foreach ($posted as $key => $value)
+			{
+				$key = preg_replace('/[^a-z0-9_]/', '', $key);
+				if ($key === '')
+				{
+					continue;
+				}
+				$clean[$key] = $value;
+			}
+
+			if (!empty($clean))
+			{
+				$this->Setting_model->update_many($clean, $group);
+			}
+		}
+
+		$this->session->set_flashdata('success', 'Settings saved successfully.');
+		redirect('admin/settings');
 	}
 }

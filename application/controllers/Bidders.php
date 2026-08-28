@@ -61,7 +61,7 @@ class Bidders extends CI_Controller {
 		}
 
 		$user_id = $this->session->userdata('user_id');
-		$data['items'] = $this->Item_model->get_by_event_id($event_id) ?: [];
+		$data['items'] = $this->Item_model->get_approved_by_event($event_id) ?: [];
 		$all_user_bids = $this->Bid_model->get_by_bidder_id($user_id) ?: [];
 		$item_ids = array_column($data['items'], 'id');
 		$data['user_bids'] = array_filter($all_user_bids, function ($bid) use ($item_ids) {
@@ -96,11 +96,18 @@ class Bidders extends CI_Controller {
 			}
 
 			$highest_bid = $this->Bid_model->get_highest_bid($item_id);
-			$min_bid = $highest_bid ? $highest_bid['amount'] + 1 : $item['starting_price'];
+			$min_bid = $this->Bid_model->compute_min_bid_from_item($item, $highest_bid);
+			$increment = (float) $item['min_increment'];
 
 			if ($amount < $min_bid)
 			{
 				$this->session->set_flashdata('error', 'Bid must be at least Rp ' . number_format($min_bid, 0, ',', '.'));
+				redirect($this->input->server('HTTP_REFERER'));
+			}
+
+			if ($increment > 0 && !$this->Bid_model->is_valid_bid_amount($item, $amount))
+			{
+				$this->session->set_flashdata('error', 'Bid harus kelipatan Rp ' . number_format($increment, 0, ',', '.') . ' dari harga awal.');
 				redirect($this->input->server('HTTP_REFERER'));
 			}
 

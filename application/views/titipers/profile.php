@@ -12,7 +12,7 @@
         <div class="profile-avatar-section">
             <div class="profile-avatar">
                 <?php if (!empty($user['avatar'])): ?>
-                    <img src="<?= base_url('uploads/avatars/' . $user['avatar']) ?>" alt="Avatar">
+                    <img src="<?= base_url('uploads/avatars/' . $user['avatar']) ?>" alt="Avatar" onerror="this.onerror=null;this.src='<?= base_url('assets/images/default-avatar.svg') ?>'">
                 <?php else: ?>
                     <div class="avatar-placeholder"><i class="fas fa-user"></i></div>
                 <?php endif; ?>

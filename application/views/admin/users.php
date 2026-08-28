@@ -32,7 +32,7 @@
                             <td>
                                 <div class="user-cell">
                                     <?php if (!empty($usr['avatar'])): ?>
-                                        <img src="<?= base_url('uploads/avatars/' . $usr['avatar']) ?>" alt="" class="user-avatar-sm">
+                                        <img src="<?= base_url('uploads/avatars/' . $usr['avatar']) ?>" alt="" class="user-avatar-sm" onerror="this.onerror=null;this.src='<?= base_url('assets/images/default-avatar.svg') ?>'">
                                     <?php else: ?>
                                         <div class="user-avatar-placeholder"><i class="fas fa-user"></i></div>
                                     <?php endif; ?>

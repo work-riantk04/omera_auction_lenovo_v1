@@ -28,7 +28,7 @@
                 <label for="banner_image">Banner Image</label>
                 <?php if (!empty($event['banner_image'])): ?>
                     <div class="current-image">
-                        <img src="<?= base_url('uploads/events/' . $event['banner_image']) ?>" alt="Current banner">
+                        <img src="<?= base_url('uploads/events/' . $event['banner_image']) ?>" alt="Current banner" onerror="this.onerror=null;this.src='<?= base_url('assets/images/placeholder-event.php') ?>'">
                         <span class="image-label">Current banner</span>
                     </div>
                 <?php endif; ?>

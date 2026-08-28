@@ -115,6 +115,8 @@ $route['bidders/profile'] = 'bidders/profile';
 */
 $route['api/bid'] = 'api/bid';
 $route['api/countdown'] = 'api/countdown';
+$route['api/events'] = 'api/events';
+$route['api/events/(:num)'] = 'api/events/$1';
 
 /*
 | -------------------------------------------------------------------------

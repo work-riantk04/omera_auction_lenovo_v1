@@ -24,21 +24,22 @@ class Bid_model extends CI_Model {
     {
         $amount = (float) $amount;
 
-        $this->db->where('event_id', $event_id);
-        $this->db->where('item_id', $item_id);
-        $this->db->where('status', 'approved');
+        $this->db->where('items.id', $item_id);
+        $this->db->where('items.event_id', $event_id);
+        $this->db->where('items.status', 'approved');
         $item = $this->db->get('items')->row_array();
         if (!$item) {
             return FALSE;
         }
 
         $highest = $this->get_highest_bid($item_id);
-        $min_bid = $item['starting_price'];
-        if ($highest) {
-            $min_bid = $highest['amount'] + 1;
-        }
+        $min_bid = $this->compute_min_bid_from_item($item, $highest);
 
         if ($amount < $min_bid) {
+            return FALSE;
+        }
+
+        if (!$this->is_valid_bid_amount($item, $amount)) {
             return FALSE;
         }
 
@@ -51,6 +52,51 @@ class Bid_model extends CI_Model {
         );
 
         return $this->create($bid_data);
+    }
+
+    public function compute_min_bid_from_item($item, $highest = FALSE)
+    {
+        $start = (float) $item['starting_price'];
+        $inc   = (float) $item['min_increment'];
+        $base  = $highest ? (float) $highest['amount'] : $start;
+
+        if ($inc > 0) {
+            $k = (int) floor(($base - $start) / $inc) + 1;
+            return $start + ($k * $inc);
+        }
+        return $base + 1;
+    }
+
+    public function compute_min_bid($item_id)
+    {
+        $item = $this->db->where('id', $item_id)->get('items')->row_array();
+        if (!$item) {
+            return FALSE;
+        }
+        $highest = $this->get_highest_bid($item_id);
+        return $this->compute_min_bid_from_item($item, $highest);
+    }
+
+    public function is_valid_bid_amount($item, $amount)
+    {
+        $amount = (float) $amount;
+        $start  = (float) $item['starting_price'];
+        $inc    = (float) $item['min_increment'];
+
+        $min = $this->compute_min_bid_from_item($item, $this->get_highest_bid($item['id']));
+        if ($amount < $min) {
+            return FALSE;
+        }
+
+        if ($inc > 0) {
+            $diff = $amount - $start;
+            $mod  = ((int) round($diff * 100)) % ((int) round($inc * 100));
+            if ($mod !== 0) {
+                return FALSE;
+            }
+        }
+
+        return TRUE;
     }
 
     public function get_highest_bid($item_id)

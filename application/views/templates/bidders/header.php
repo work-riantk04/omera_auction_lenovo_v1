@@ -389,7 +389,7 @@
                     </div>
                     <div class="user-dropdown" id="userDropdown">
                         <button class="user-dropdown-toggle">
-                            <img src="<?= $this->session->userdata('avatar') ? base_url('uploads/avatars/'.$this->session->userdata('avatar')) : base_url('assets/images/default-avatar.svg') ?>" alt="Avatar" class="user-avatar">
+                            <img src="<?= $this->session->userdata('avatar') ? base_url('uploads/avatars/'.$this->session->userdata('avatar')) : base_url('assets/images/default-avatar.svg') ?>" alt="Avatar" class="user-avatar" onerror="this.onerror=null;this.src='<?= base_url('assets/images/default-avatar.svg') ?>'">
                             <span class="user-name"><?= $this->session->userdata('name') ?></span>
                             <i class="fas fa-chevron-down"></i>
                         </button>

@@ -140,6 +140,48 @@
         justify-content: center;
         font-size: 0.8rem;
     }
+    .multi-preview {
+        margin-top: 16px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .multi-preview .preview-item {
+        position: relative;
+        width: 120px;
+        height: 100px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        background: var(--bg-secondary);
+    }
+    .multi-preview .preview-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .multi-preview .preview-item .remove-preview {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.9);
+        color: #fff;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        line-height: 1;
+    }
+    .multi-preview .preview-empty {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+    }
     .btn {
         display: inline-flex;
         align-items: center;
@@ -223,23 +265,29 @@
         </div>
 
         <div class="form-group">
-            <label for="image">Foto Barang</label>
+            <label for="imagesInput">Foto Barang (bisa lebih dari satu)</label>
             <div class="file-upload-area" id="uploadArea">
-                <input type="file" name="image" id="imageInput" accept="image/jpeg,image/png,image/gif">
+                <input type="file" name="images[]" id="imagesInput" accept="image/jpeg,image/png,image/gif" multiple>
                 <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
                 <div class="upload-text">Klik atau seret foto ke sini</div>
-                <div class="upload-hint">Format: JPG, PNG, GIF. Maks 2MB.</div>
+                <div class="upload-hint">Format: JPG, PNG, GIF. Maks 2MB per file. Bisa pilih banyak sekaligus.</div>
             </div>
-            <div class="image-preview" id="imagePreview">
-                <img id="previewImg" src="" alt="Preview">
-                <button type="button" class="remove-preview" id="removePreview"><i class="fas fa-times"></i></button>
-            </div>
+            <div class="multi-preview" id="multiPreview"></div>
         </div>
 
         <div class="form-group">
             <label for="starting_price">Harga Mulai (Rp)</label>
             <input type="number" name="starting_price" id="starting_price" value="<?= set_value('starting_price') ?>" min="0" step="1000" placeholder="0" required>
             <div class="form-help">Harga minimum yang ditawarkan saat lelang dimulai.</div>
+        </div>
+
+        <div class="form-group">
+            <label for="min_increment">Harga Kenaikan Minimal (Rp)</label>
+            <input type="number" name="min_increment" id="min_increment" value="<?= set_value('min_increment') ?>" min="0" step="100" placeholder="0">
+            <div class="form-help">
+                Kelipatan bid minimum. Contoh: harga mulai 5000 dan kenaikan 500, maka bidders wajib bid 5500 / 6000 / 6500 / dst.
+                Kosongkan atau isi 0 jika tidak ingin membatasi.
+            </div>
         </div>
 
         <div class="form-actions">
@@ -251,26 +299,40 @@
 
 <script>
 (function() {
-    var input = document.getElementById('imageInput');
-    var preview = document.getElementById('imagePreview');
-    var previewImg = document.getElementById('previewImg');
-    var removeBtn = document.getElementById('removePreview');
+    var input = document.getElementById('imagesInput');
+    var container = document.getElementById('multiPreview');
 
     input.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                previewImg.src = e.target.result;
-                preview.style.display = 'block';
-            };
-            reader.readAsDataURL(this.files[0]);
+        container.innerHTML = '';
+        var files = Array.prototype.slice.call(this.files || []);
+        if (files.length === 0) {
+            container.innerHTML = '<span class="preview-empty">Belum ada foto dipilih.</span>';
+            return;
         }
-    });
-
-    removeBtn.addEventListener('click', function() {
-        input.value = '';
-        preview.style.display = 'none';
-        previewImg.src = '';
+        files.forEach(function(file) {
+            if (!/^image\//.test(file.type)) return;
+            var item = document.createElement('div');
+            item.className = 'preview-item';
+            var img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'remove-preview';
+            btn.innerHTML = '<i class="fas fa-times"></i>';
+            btn.addEventListener('click', function() {
+                item.remove();
+                var dt = new DataTransfer();
+                var remaining = Array.prototype.slice.call(input.files).filter(function(f) { return f !== file; });
+                remaining.forEach(function(f) { dt.items.add(f); });
+                input.files = dt.files;
+                if (!remaining.length) {
+                    container.innerHTML = '<span class="preview-empty">Belum ada foto dipilih.</span>';
+                }
+            });
+            item.appendChild(img);
+            item.appendChild(btn);
+            container.appendChild(item);
+        });
     });
 })();
 </script>

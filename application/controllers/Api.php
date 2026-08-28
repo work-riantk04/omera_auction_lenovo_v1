@@ -54,7 +54,8 @@ class Api extends CI_Controller {
 		}
 
 		$highest_bid = $this->Bid_model->get_highest_bid($item_id);
-		$min_bid = $highest_bid ? $highest_bid['amount'] + 1 : $item['starting_price'];
+		$min_bid = $this->Bid_model->compute_min_bid($item_id);
+		$increment = (float) $item['min_increment'];
 
 		if ($amount < $min_bid)
 		{
@@ -62,19 +63,45 @@ class Api extends CI_Controller {
 			return;
 		}
 
-		$this->Bid_model->place_bid($item['event_id'], $item_id, $user_id, $amount);
+		if ($increment > 0 && !$this->Bid_model->is_valid_bid_amount($item, $amount))
+		{
+			$next = number_format((float) $item['starting_price'] + $increment, 0, ',', '.');
+			echo json_encode(['status' => 'error', 'message' => 'Bid harus kelipatan Rp ' . number_format($increment, 0, ',', '.') . ' dari harga awal (contoh: ' . $next . ', dst.)']);
+			return;
+		}
 
-		$bid_count = count($this->Bid_model->get_bids_by_item($item_id));
+		$placed = $this->Bid_model->place_bid($item['event_id'], $item_id, $user_id, $amount);
+		if ($placed === FALSE)
+		{
+			echo json_encode(['status' => 'error', 'message' => 'Bid could not be saved. Please try again.']);
+			return;
+		}
+
+		$bids = $this->Bid_model->get_bids_by_item($item_id);
 		$new_highest = $this->Bid_model->get_highest_bid($item_id);
 
 		echo json_encode([
 			'status' => 'success',
 			'message' => 'Bid placed successfully.',
 			'data' => [
-				'bid_count' => $bid_count,
-				'highest_bid' => $new_highest['amount'],
-				'highest_bidder' => $new_highest['bidders_id']
+				'bid_count' => $bids ? count($bids) : 0,
+				'highest_bid' => (float) $new_highest['amount'],
+				'highest_bidder' => (int) $new_highest['bidder_id']
 			]
+		]);
+	}
+
+	public function events($offset = 0)
+	{
+		$limit = 10;
+		$offset = max(0, (int) $offset);
+		$events = $this->Event_model->get_all($limit, $offset) ?: [];
+		$total = $this->Event_model->count_all();
+
+		echo json_encode([
+			'status' => 'success',
+			'data' => $events,
+			'has_more' => ($offset + count($events)) < $total
 		]);
 	}
 
